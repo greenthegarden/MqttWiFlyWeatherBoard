@@ -46,23 +46,24 @@ reboot
 
 #include "config.h"
 
-#if ENABLE_POWER_MONITOR
-#include <Wire.h>
-#include <SDL_Arduino_INA3221.h>
-#endif 
 
 #if ENABLE_WDT
 #include <avr/wdt.h>  // required for AVR watchdog timer
 #endif
+
 
 // external sensor libraries
 #if ENABLE_TEMP || ENABLE_HUMIDITY
 #include <SHT1x.h>              // SHT15 humidity sensor library
 #endif
 #if ENABLE_PRESSURE
-#include <SFE_BMP085.h>         // BMP085 pressure sensor library
 #include <Wire.h>               // I2C library (necessary for pressure sensor)
+#include <SFE_BMP085.h>         // BMP085 pressure sensor library
 #endif
+#if ENABLE_POWER_MONITOR
+#include <Wire.h>
+#include <SDL_Arduino_INA3221.h>
+#endif 
 
 
 // character buffer to support conversion of floats to char
@@ -486,6 +487,40 @@ void rainfall_measurement()
   buf[0] = '\0';
   dtostrf(WM_rainfall,1,FLOAT_DECIMAL_PLACES, buf);
   mqttClient.publish(rainfall_topic, buf);
+}
+#endif
+
+#if ENABLE_POWER_MONITOR
+void sunairplus_measurement()
+{
+  float measurement = 0.0;
+  //LIPO battery measurements
+  measurement = ina3221.getBusVoltage_V(LIPO_BATTERY_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(battery_voltage_topic, buf);
+  measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(battery_current_topic, buf);
+  // Solar cell measurements
+  measurement = ina3221.getBusVoltage_V(SOLAR_CELL_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(solar_voltage_topic, buf);
+  measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(solar_current_topic, buf);
+  // SunAirPlus output measurements
+  measurement = ina3221.getBusVoltage_V(OUTPUT_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(output_voltage_topic, buf);
+  measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  mqttClient.publish(output_current_topic, buf);
 }
 #endif
 
