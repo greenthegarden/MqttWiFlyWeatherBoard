@@ -143,8 +143,10 @@ void publish_measurements()
   wdt_reset();
 #endif
 
+#if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
-  
+#endif
+
   if (!wifly_connected)
     connect_wifly();
 
@@ -163,8 +165,10 @@ void publish_measurements()
       wdt_reset();
 #endif
 
+#if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
-      
+#endif
+
       mqttClient.publish(wifly_topic, "Connected to broker");
       
       takeMeasurement();
@@ -192,10 +196,12 @@ void setup()
   wdt_disable();
 #endif
 
+#if USE_STATUS_LED
   // Configure status LED
   pinMode(STATUS_LED, OUTPUT);
   digitalWrite(STATUS_LED, LOW);
-  
+#endif
+
   // lots of time for the WiFly to start up
   delay(5000);
 
@@ -205,13 +211,17 @@ void setup()
 
   connect_wifly();
   
+#if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
-  
+#endif
+
   if (wifly_connected)
   {
     if (mqttClient.connect(mqtt_client_id))
     {
+#if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
+#endif
       mqttClient.publish(wifly_topic, "Connected to broker");
     } 
     else

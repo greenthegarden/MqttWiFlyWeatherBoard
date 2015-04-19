@@ -24,6 +24,10 @@
 #define ENABLE_WDT              false
 
 
+// status LED to show when WiFLy is connecting (consider turning off to save power)
+#define USE_STATUS_LED          true
+
+
 // Serial parameters
 #define BAUD_RATE               9600
 
