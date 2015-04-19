@@ -89,6 +89,9 @@ SHT1x humidity_sensor(SHT1x_DATA, SHT1x_CLOCK);
 #if ENABLE_PRESSURE
 SFE_BMP085 pressure_sensor(BMP_ADDR);
 #endif
+#if ENABLE_POWER_MONITOR
+SDL_Arduino_INA3221 ina3221;
+#endif
 
 
 // function declarations
@@ -237,6 +240,10 @@ void setup()
     mqttClient.publish(sensor_topic,"BMP085 init success");
   else
     mqttClient.publish(sensor_topic,"BMP085 init failure");
+#endif
+
+#if ENABLE_POWER_MONITOR
+  ina3221.begin();
 #endif
 
 #if ENABLE_WEATHER_METERS

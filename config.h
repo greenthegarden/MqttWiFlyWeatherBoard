@@ -10,11 +10,19 @@
 #define ENABLE_LIGHT            true
 #define ENABLE_WEATHER_METERS   false
 
+#define ENABLE_POWER_MONITOR    true    // for use with SwitchDoc Lab SunAirPlus
+
+#if ENABLE_POWER_MONITOR
+// the three channels of the INA3221 named for SunAirPlus Solar Power Controller channels (www.switchdoc.com)
+#define LIPO_BATTERY_CHANNEL 1
+#define SOLAR_CELL_CHANNEL 2
+#define OUTPUT_CHANNEL 3
+#endif
+
+
 // Watchdog timer
 #define ENABLE_WDT              false
 
-
-#define ENABLE_POWER_MONITOR    false    // for use with SwitchDoc Lab SunAirPlus
 
 // Serial parameters
 #define BAUD_RATE               9600
