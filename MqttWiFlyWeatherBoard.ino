@@ -70,7 +70,7 @@ reboot
 char buf[12];
 
 
-// global variables definitions
+// global variable definitions
 unsigned long previousMillis = 0;
 #if ENABLE_WEATHER_METERS
 unsigned int windRPM     = 0;
@@ -83,7 +83,7 @@ volatile unsigned long raintime = 0, rainlast = 0, raininterval = 0, rain = 0;
 #endif
 
 
-// sensor objects
+// initialisation of sensor objects
 #if ENABLE_TEMP || ENABLE_HUMIDITY
 SHT1x humidity_sensor(SHT1x_DATA, SHT1x_CLOCK);
 #endif
@@ -105,13 +105,16 @@ float get_wind_direction();
 #endif
 
 
+// callback definition for MQTT
 void callback(char* topic, uint8_t* payload, unsigned int length)
 {
   // nothing to do here!!
 }
 
+
 WiFlyClient wiflyClient;
 PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
+
 
 void connect_wifly()
 {
@@ -119,8 +122,10 @@ void connect_wifly()
   wdt_reset();
 #endif
 
+#if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
-  
+#endif
+
   WiFly.begin();
 
   if (!WiFly.join(ssid, passphrase, mode))
@@ -133,7 +138,9 @@ void connect_wifly()
   } 
   else {
     wifly_connected = true;
+#if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
+#endif
   }
 }
 
@@ -158,7 +165,6 @@ void publish_measurements()
   {
     // MQTT client setup
 //    mqttClient.disconnect();
-//    debug(F("Connecting"), GREEN);
     if (mqttClient.connect(mqtt_client_id))
     {
 #if ENABLE_WDT
@@ -326,7 +332,7 @@ void loop()
 #endif  // ENABLE_WEATHER_METERS
 
   // require a client.loop in order to receive subscriptions
-  //client.loop();
+  //client.loop();  
 }
 
 /*--------------------------------------------------------------------------------------
