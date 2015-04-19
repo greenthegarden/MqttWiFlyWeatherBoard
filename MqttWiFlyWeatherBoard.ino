@@ -46,7 +46,14 @@ reboot
 
 #include "config.h"
 
-#include <avr/wdt.h>
+#if ENABLE_POWER_MONITOR
+#include <Wire.h>
+#include <SDL_Arduino_INA3221.h>
+#endif 
+
+#if ENABLE_WDT
+#include <avr/wdt.h>  // required for AVR watchdog timer
+#endif
 
 // external sensor libraries
 #if ENABLE_TEMP || ENABLE_HUMIDITY
@@ -104,8 +111,10 @@ PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
 
 void connect_wifly()
 {
+#if ENABLE_WDT
   wdt_reset();
-  
+#endif
+
   digitalWrite(STATUS_LED, HIGH);
   
   WiFly.begin();
@@ -113,7 +122,9 @@ void connect_wifly()
   if (!WiFly.join(ssid, passphrase, mode))
   {
     wifly_connected = false;
+#if ENABLE_WDT
     wdt_reset();
+#endif
     delay(AFTER_ERROR_DELAY);
   } 
   else {
@@ -124,14 +135,18 @@ void connect_wifly()
 
 void publish_measurements()
 {
+#if ENABLE_WDT
   wdt_reset();
-  
+#endif
+
   digitalWrite(STATUS_LED, HIGH);
   
   if (!wifly_connected)
     connect_wifly();
 
+#if ENABLE_WDT
   wdt_reset();
+#endif
   
   if (wifly_connected)
   {
@@ -140,8 +155,10 @@ void publish_measurements()
 //    debug(F("Connecting"), GREEN);
     if (mqttClient.connect(mqtt_client_id))
     {
+#if ENABLE_WDT
       wdt_reset();
-      
+#endif
+
       digitalWrite(STATUS_LED, LOW);
       
       mqttClient.publish(wifly_topic, "Connected to broker");
@@ -152,7 +169,9 @@ void publish_measurements()
     } 
     else
     {
+#if ENABLE_WDT
       wdt_reset();
+#endif
       delay(AFTER_ERROR_DELAY);
     }
   }
@@ -165,8 +184,10 @@ void publish_measurements()
  --------------------------------------------------------------------------------------*/
 void setup()
 {
+#if ENABLE_WDT
   wdt_disable();
-  
+#endif
+
   // Configure status LED
   pinMode(STATUS_LED, OUTPUT);
   digitalWrite(STATUS_LED, LOW);
@@ -253,7 +274,9 @@ void setup()
  --------------------------------------------------------------------------------------*/
 void loop()
 {
+#if ENABLE_WDT
   wdt_reset();
+#endif
 
   unsigned long currentMillis = millis();
 
@@ -295,8 +318,11 @@ void loop()
 
 void takeMeasurement(void)
 {
+#if ENABLE_WDT
   wdt_reset();
-  // connext to mqtt server
+#endif
+
+// connect to mqtt server
 //  if (!mqttClient.loop())
 //  {
 //    connect_mqtt();

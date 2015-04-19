@@ -12,7 +12,10 @@
 
 // Watchdog timer
 #define ENABLE_WDT              false
-//#define
+
+
+#define ENABLE_POWER_MONITOR    false    // for use with SwitchDoc Lab SunAirPlus
+
 // Serial parameters
 #define BAUD_RATE               9600
 
