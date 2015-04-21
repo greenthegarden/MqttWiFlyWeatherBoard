@@ -175,7 +175,9 @@ void publish_measurements()
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-      mqttClient.publish(wifly_topic, "Connected to broker");
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+      mqttClient.publish(prog_buffer, "Connected to broker");
       
       takeMeasurement();
       
@@ -228,7 +230,9 @@ void setup()
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
-      mqttClient.publish(wifly_topic, "Connected to broker");
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+      mqttClient.publish(prog_buffer, "Connected to broker");
     } 
     else
     {
@@ -253,10 +257,12 @@ void setup()
   digitalWrite(XCLR,HIGH);             // enable BMP085
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
   if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-    mqttClient.publish(sensor_topic,"BMP085 init success");
+    mqttClient.publish(prog_buffer,"BMP085 init success");
   else
-    mqttClient.publish(sensor_topic,"BMP085 init failure");
+    mqttClient.publish(prog_buffer,"BMP085 init failure");
 #endif
 
 #if ENABLE_POWER_MONITOR
@@ -377,9 +383,14 @@ void temperature_measurement()
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
 
   float SHT15_temp = humidity_sensor.readTemperatureC();  // temperature returned in degrees Celcius
+
   buf[0] = '\0';
   dtostrf(SHT15_temp,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(SHT15_temp_topic, buf);
+
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[0])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 #endif
 
@@ -389,9 +400,14 @@ void humidity_measurement()
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
 
   float SHT15_humidity = humidity_sensor.readHumidity();
+  
   buf[0] = '\0';
   dtostrf(SHT15_humidity,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(SHT15_humidity_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[1])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 #endif
 
@@ -417,18 +433,27 @@ void BMP085_measurement()
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
     status = pressure_sensor.getTemperature(&BMP085_temp); // temperature returned in degrees Celcius
+    
+    prog_buffer[0] = '\0';
+    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[2])));
+    
     if (status != 0)
     {
       // publish BMP085 temperature measurement
       buf[0] = '\0';
       dtostrf(BMP085_temp,1,FLOAT_DECIMAL_PLACES, buf);
-      mqttClient.publish(BMP085_temp_topic, buf);
+      
+      mqttClient.publish(prog_buffer, buf);
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
       // if request is successful, the number of ms to wait is returned
       // if request is unsuccessful, 0 is returned
       status = pressure_sensor.startPressure(3);
+      
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[3])));
+
       if (status != 0)
       {
         // wait for the measurement to complete
@@ -444,19 +469,20 @@ void BMP085_measurement()
           // publish BMP085 pressure measurement
           buf[0] = '\0';
           dtostrf(BMP085_pressure,1,FLOAT_DECIMAL_PLACES, buf);
-          mqttClient.publish(BMP085_pressure_topic, buf);
+
+          mqttClient.publish(prog_buffer, buf);
         }
         else
-          mqttClient.publish(BMP085_pressure_topic, "ERR_BMP085_PRESSURE_GET");
+          mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_GET");
       }    
       else
-        mqttClient.publish(BMP085_pressure_topic, "ERR_BMP085_PRESSURE_START");
+        mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_START");
     }
     else
-      mqttClient.publish(BMP085_temp_topic, "ERR_BMP085_TEMP_GET");
+      mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_GET");
   }
   else
-    mqttClient.publish(BMP085_temp_topic, "ERR_BMP085_TEMP_START");
+    mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_START");
 }
 #endif
 
@@ -465,15 +491,26 @@ void TEMT6000_measurement()
 {
   // get light level
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
+  
   buf[0] = '\0';
   itoa(TEMT6000_light_raw, buf, 10);
-  mqttClient.publish(TEMT6000_light_raw_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[4])));
+
+  mqttClient.publish(prog_buffer, buf);
 
   // convert TEMT6000_light_raw voltage value to percentage
   //map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
+  
+  buf[0] = '\0';
   itoa(TEMT6000_light, buf, 10);
-  mqttClient.publish(TEMT6000_light_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[5])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 #endif
 
@@ -482,27 +519,42 @@ void windspeed_measurement()
 {
   // windspeed unit conversion
   float WM_wspeed = float(windRPM) / WIND_RPM_TO_KNOTS;
+  
   buf[0] = '\0';
   dtostrf(WM_wspeed,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(wind_spd_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[6])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 
 void winddirection_measurement()
 {
   // wind direction
   float WM_wdirection = get_wind_direction();  // should return a -1 is disconnected
+  
   buf[0] = '\0';
   dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(wind_dir_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[7])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 
 void rainfall_measurement()
 {
   // rainfall unit conversion
   float WM_rainfall = rain * RAIN_BUCKETS_TO_MM;
+  
   buf[0] = '\0';
   dtostrf(WM_rainfall,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(rainfall_topic, buf);
+
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[8])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 #endif
 
@@ -510,33 +562,72 @@ void rainfall_measurement()
 void sunairplus_measurement()
 {
   float measurement = 0.0;
+  
   //LIPO battery measurements
+  
   measurement = ina3221.getBusVoltage_V(LIPO_BATTERY_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(battery_voltage_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[0])));
+
+  mqttClient.publish(prog_buffer, buf);
+  
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(battery_current_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[1])));
+
+  mqttClient.publish(prog_buffer, buf);
+  
   // Solar cell measurements
+  
   measurement = ina3221.getBusVoltage_V(SOLAR_CELL_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(solar_voltage_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[2])));
+
+  mqttClient.publish(prog_buffer, buf);
+  
   measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(solar_current_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[3])));
+
+  mqttClient.publish(prog_buffer, buf);
+
   // SunAirPlus output measurements
+  
   measurement = ina3221.getBusVoltage_V(OUTPUT_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(output_voltage_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[4])));
+
+  mqttClient.publish(prog_buffer, buf);
+  
   measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
+  
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  mqttClient.publish(output_current_topic, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[5])));
+
+  mqttClient.publish(prog_buffer, buf);
 }
 #endif
 
