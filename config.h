@@ -5,9 +5,9 @@
 //#define DEBUG                   false    // turn on DEBUG in libraries
 
 #define ENABLE_TEMP             true
-#define ENABLE_HUMIDITY         false
-#define ENABLE_PRESSURE         false
-#define ENABLE_LIGHT            false
+#define ENABLE_HUMIDITY         true
+#define ENABLE_PRESSURE         true
+#define ENABLE_LIGHT            true
 #define ENABLE_WEATHER_METERS   false
 
 #define ENABLE_POWER_MONITOR    false    // for use with SwitchDoc Lab SunAirPlus
@@ -50,11 +50,9 @@ const byte BUFFER_SIZE        = 42;
 char prog_buffer[BUFFER_SIZE];
 
 
-//topics
-//char wifly_topic[]            = "weather/status/wifly";
-//char sensor_topic[]           = "weather/status/sensor";
-//char battery_topic[]          = "weather/status/battery";
-//char memory_topic[]           = "weather/status/memory";
+// MQTT topic definitions
+
+// status topics
 
 const char wifly_topic[]              PROGMEM = "weather/status/wifly";
 const char sensor_topic[]             PROGMEM = "weather/status/sensor";
@@ -67,14 +65,9 @@ PGM_P const status_topics[]           PROGMEM = { wifly_topic,      // idx = 0
                                                   memory_topic,     // idx = 3
                                                 };
 
-#if ENABLE_POWER_MONITOR
-//char battery_voltage_topic[]  = "weather/sunairplus/battery_voltage";
-//char battery_current_topic[]  = "weather/sunairplus/battery_current";
-//char solar_voltage_topic[]    = "weather/sunairplus/solar_voltage";
-//char solar_current_topic[]    = "weather/sunairplus/solar_current";
-//char output_voltage_topic[]   = "weather/sunairplus/output_voltage";
-//char output_current_topic[]   = "weather/sunairplus/output_current";
+// sunairplus measurement topics 
 
+#if ENABLE_POWER_MONITOR
 const char battery_voltage_topic[]    PROGMEM = "weather/sunairplus/battery_voltage";
 const char battery_current_topic[]    PROGMEM = "weather/sunairplus/battery_current";
 const char solar_voltage_topic[]      PROGMEM = "weather/sunairplus/solar_voltage";
@@ -92,26 +85,7 @@ PGM_P const sunairplus_topics[]       PROGMEM = { battery_voltage_topic,     // 
                                                 };
 #endif
 
-
-//#if ENABLE_TEMP
-//char SHT15_temp_topic[]       = "weather/measurement/SHT15_temp";
-//#endif
-//#if ENABLE_HUMIDITY
-//char SHT15_humidity_topic[]   = "weather/measurement/SHT15_humidity";
-//#endif
-//#if ENABLE_PRESSURE
-//char BMP085_temp_topic[]      = "weather/measurement/BMP085_temp";
-//char BMP085_pressure_topic[]  = "weather/measurement/BMP085_pressure";
-//#endif
-//#if ENABLE_LIGHT
-//char TEMT6000_light_raw_topic[] = "weather/measurement/TEMT6000_light_raw";
-//char TEMT6000_light_topic[]   = "weather/measurement/TEMT6000_light";
-//#endif
-//#if ENABLE_WEATHER_METERS
-//char wind_dir_topic[]         = "weather/measurement/wind_dir";
-//char wind_spd_topic[]         = "weather/measurement/wind_spd";
-//char rainfall_topic[]         = "weather/measurement/rain";
-//#endif
+// measurement topics
 
 //#if ENABLE_TEMP
 const char SHT15_temp_topic[]         PROGMEM = "weather/measurement/SHT15_temp";
@@ -144,7 +118,9 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
                                                   wind_dir_topic,            // idx = 7
                                                   rainfall_topic,            // idx = 8
                                                 };
-                                                  
+
+
+// program constants
 
 #define FLOAT_DECIMAL_PLACES    1
 #define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
@@ -152,6 +128,7 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
 
 
 // constant conversion factors
+
 #if ENABLE_WEATHER_METERS
 //const float WIND_RPM_TO_MPH  = 22.686745;         // divide RPM by this for velocity
 const float WIND_RPM_TO_MPS    = 50.748803;         // divide RPM by this for meters per second
@@ -163,7 +140,8 @@ const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result
 #endif
 
 
-// digital I/O pins
+// Weather Board Digital I/O pin definitions
+
 #define   RAIN         2
 #define   WSPEED       3
 #define   STATUS_LED   4

@@ -1,15 +1,25 @@
 /*
   Code based on Sparkfun WeatherShield v1.4 source from
+  https://github.com/sparkfun/USB_Weather_Board/
+  The libaraies included with the Sparkfun source code, 
+  for the temperature sensor (SHT1x) and pressure sensor  (SFE_BMP085)
+  are required to be installed in the Arduino library folder
+  in order to compile the code.
   
-  Additional libaraies, available with the Sparkfun code are
-  required to compile this program.
+  In addition, the Wifly-MQTT library from
+  https://github.com/lagoudiana/Wifly-MQTT/tree/master/Arduino-wifly%20MQTT
+  is used to provide the MQTT interface.
 */
 
 /*
   To compile Set Tools/Board in the Arduino IDE to 
   "Arduino Pro or Pro Mini (3.3V 8MHz) w/ ATmega328"
   
-  While uploading to th e
+  While uploading to code to the Weather Board, remove the WiFly module and
+  ensure the Comm switch is set to 'USB'
+  
+  Once code is uploaded, before powering up ensure the Comm switch is set to 'RF' and 
+  WiFly module is re-connected
 */
 
 /* 
@@ -236,9 +246,9 @@ void publish_measurements()
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-//      prog_buffer[0] = '\0';
-//      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-//      mqttClient.publish(prog_buffer, "Connected to broker");
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+      mqttClient.publish(prog_buffer, "Connected to broker");
       
       takeMeasurement();
       
@@ -291,9 +301,9 @@ void setup()
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
-//      prog_buffer[0] = '\0';
-//      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-//      mqttClient.publish(prog_buffer, "Connected to broker");
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+      mqttClient.publish(prog_buffer, "Connected to broker");
     } 
     else
     {
@@ -318,12 +328,12 @@ void setup()
   digitalWrite(XCLR,HIGH);             // enable BMP085
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
-//  prog_buffer[0] = '\0';
-//  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
-//  if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-//    mqttClient.publish(prog_buffer,"BMP085 init success");
-//  else
-//    mqttClient.publish(prog_buffer,"BMP085 init failure");
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
+  if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
+    mqttClient.publish(prog_buffer,"BMP085 init success");
+  else
+    mqttClient.publish(prog_buffer,"BMP085 init failure");
 #endif
 
 #if ENABLE_POWER_MONITOR
@@ -491,12 +501,12 @@ void BMP085_measurement()
     // wait for the measurement to complete
     delay(status);
 
+    prog_buffer[0] = '\0';
+    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[2])));
+    
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
     status = pressure_sensor.getTemperature(&BMP085_temp); // temperature returned in degrees Celcius
-    
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[2])));
     
     if (status != 0)
     {
@@ -506,15 +516,15 @@ void BMP085_measurement()
       
       mqttClient.publish(prog_buffer, buf);
 
+      prog_buffer[0] = '\0';
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[3])));
+
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
       // if request is successful, the number of ms to wait is returned
       // if request is unsuccessful, 0 is returned
       status = pressure_sensor.startPressure(3);
       
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[3])));
-
       if (status != 0)
       {
         // wait for the measurement to complete
