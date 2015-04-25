@@ -32,10 +32,8 @@
 #define BAUD_RATE               9600
 
 
-// Wifi parameters
-const char ssid[]             = "ssid";
-const char passphrase[]       = "password";
-boolean    mode               = true; //or WEP_MODE
+// Network configuration
+#include "networkConfig.h"
 
 
 // MQTT parameters

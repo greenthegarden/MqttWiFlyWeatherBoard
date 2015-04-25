@@ -1,30 +1,40 @@
+/*
+  Code based on Sparkfun WeatherShield v1.4 source from
+  
+  Additional libaraies, available with the Sparkfun code are
+  required to compile this program.
+*/
 
-// Set Tools/Board to "Arduino Pro or Pro Mini (3.3V 8MHz) w/ ATmega328"
+/*
+  To compile Set Tools/Board in the Arduino IDE to 
+  "Arduino Pro or Pro Mini (3.3V 8MHz) w/ ATmega328"
+  
+  While uploading to th e
+*/
 
-// Uses the SHT15x library by Jonathan Oxer et.al.  https://github.com/practicalarduino/SHT1x
-// A special version is supplied with this software distribution.
-// Place in your Arduino sketchbook under "libraries/SHT1x"
+/* 
+  Function notes
+  
+  dtostrf function details
+    dtostrf(floatVar, minStringWidthIncDecimalPoint, numVarsAfterDecimal, charBuf);
 
-// Uses the SFE_BMP085 library by SparkFun with math from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
-// Supplied with this distribution; place in your Arduino sketchbook under "libraries/SFE_BMP085"
-
-// Note dtostrf function details
-// dtostrf(floatVar, minStringWidthIncDecimalPoint, numVarsAfterDecimal, charBuf);
-
-// Note itoa function details
-// char* itoa (	int val, char *buf, int radix)
-// where radix is the number base, ie. 10
+  itoa function details
+    char* itoa (int val, char *buf, int radix)
+    where radix is the number base, ie. 10
+*/
 
 /* 
   WiFly module attributes
+    These values are specific to the modules I am using,
+    and configuration of my router.
  
- RN-XV WiFly Module - Wire Antenna
-   MAC: 00:06:66:50:71:6f
-   IP:  192.168.1.52
+  RN-XV WiFly Module - Wire Antenna
+    MAC: 00:06:66:50:71:6f
+    IP:  192.168.1.52
  
- RN-XV WiFly Module – SMA
-   MAC: 00:06:66:71:68:d5
-   IP:  192.168.1.51
+  RN-XV WiFly Module – SMA
+    MAC: 00:06:66:71:68:d5
+    IP:  192.168.1.51
 */
  
 /*
@@ -53,19 +63,14 @@
     None/Off:      Associated, Internet detected
 */
 
-
-
-// Revision history
-// 1.0 2014/04/15
-//  Initial release based on Sparkfun WeatherShield v1.4 code
-// 2.0 2015/01/31
-//  Rewritten to support MQTT and hopefully improve stability!!
-// 2.1 2015/02/02
-//  Modified to improve stability
-//  based on code from https://github.com/xoseperez/rentalito/blob/master/client/rentalito.ino
-
-/* WiFly configuration
-reboot	
+/*
+  WiFly configuration
+  
+  The following is the sequence of commands I use to
+  configure the WiFly module used when running this code.
+  (ensure values for ssid and phrase entered in place of xxx)
+  
+reboot
 $$$	
 factory RESET	
 	
@@ -79,6 +84,22 @@ set wlan join 1
 save
 reboot
 */
+
+/*
+  Revision history
+  
+  1.0 2014/04/15
+    Initial development based on Sparkfun WeatherShield v1.4 code
+  2.0 2015/01/31
+    Rewritten to support MQTT and hopefully improve stability!!
+  2.1 2015/02/02
+    Modified to improve stability
+    based on code from https://github.com/xoseperez/rentalito/blob/master/client/rentalito.ino
+  3.0 2015/04/24
+    Modified to support SunAirPower measurements
+    Moved MQTT topic strings to EEPROM to reduce SRAM usage
+*/
+
 
 // WiFly libraries
 #include <SPI.h>
