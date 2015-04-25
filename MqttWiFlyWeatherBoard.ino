@@ -338,6 +338,8 @@ void setup()
 
 #if ENABLE_POWER_MONITOR
   ina3221.begin();
+  
+  sunairplus_measurement();
 #endif
 
 #if ENABLE_WEATHER_METERS
@@ -440,6 +442,9 @@ void takeMeasurement(void)
 #endif
 #if ENABLE_LIGHT
   TEMT6000_measurement();
+#endif
+#if ENABLE_POWER_MONITOR
+  sunairplus_measurement();
 #endif
 #if ENABLE_WEATHER_METERS
   windspeed_measurement();
