@@ -15,6 +15,46 @@
 // char* itoa (	int val, char *buf, int radix)
 // where radix is the number base, ie. 10
 
+/* 
+  WiFly module attributes
+ 
+ RN-XV WiFly Module - Wire Antenna
+   MAC: 00:06:66:50:71:6f
+   IP:  192.168.1.52
+ 
+ RN-XV WiFly Module – SMA
+   MAC: 00:06:66:71:68:d5
+   IP:  192.168.1.51
+*/
+ 
+/*
+  WiFly status based on LED
+  
+  Sources:
+    http://www.instructables.com/id/WiFly-RN-XV-Module-Wireless-Arduino-Board-Tutorial/
+    http://cairohackerspace.blogspot.com.au/2011/05/beginners-guide-to-connecting-and.html
+
+  Green LED:
+    Solid:         Connected through TCP
+    Slow Blinking: IP address is assigned
+    Fast Blinking: No IP address assigned
+    None/Off:      NA
+
+  Yellow LED
+    Solid:         NA
+    Slow Blinking: NA
+    Fast Blinking: RX/TX Data Transfer
+    None/Off:      No network activity
+
+  Red LED
+    Solid:         NA
+    Slow Blinking: Associated, No internet detected
+    Fast Blinking: Not associated
+    None/Off:      Associated, Internet detected
+*/
+
+
+
 // Revision history
 // 1.0 2014/04/15
 //  Initial release based on Sparkfun WeatherShield v1.4 code
@@ -175,9 +215,9 @@ void publish_measurements()
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mqttClient.publish(prog_buffer, "Connected to broker");
+//      prog_buffer[0] = '\0';
+//      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+//      mqttClient.publish(prog_buffer, "Connected to broker");
       
       takeMeasurement();
       
@@ -230,9 +270,9 @@ void setup()
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mqttClient.publish(prog_buffer, "Connected to broker");
+//      prog_buffer[0] = '\0';
+//      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
+//      mqttClient.publish(prog_buffer, "Connected to broker");
     } 
     else
     {
@@ -257,12 +297,12 @@ void setup()
   digitalWrite(XCLR,HIGH);             // enable BMP085
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
-  if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-    mqttClient.publish(prog_buffer,"BMP085 init success");
-  else
-    mqttClient.publish(prog_buffer,"BMP085 init failure");
+//  prog_buffer[0] = '\0';
+//  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
+//  if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
+//    mqttClient.publish(prog_buffer,"BMP085 init success");
+//  else
+//    mqttClient.publish(prog_buffer,"BMP085 init failure");
 #endif
 
 #if ENABLE_POWER_MONITOR

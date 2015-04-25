@@ -5,12 +5,12 @@
 //#define DEBUG                   false    // turn on DEBUG in libraries
 
 #define ENABLE_TEMP             true
-#define ENABLE_HUMIDITY         true
-#define ENABLE_PRESSURE         true
-#define ENABLE_LIGHT            true
-#define ENABLE_WEATHER_METERS   true
+#define ENABLE_HUMIDITY         false
+#define ENABLE_PRESSURE         false
+#define ENABLE_LIGHT            false
+#define ENABLE_WEATHER_METERS   false
 
-#define ENABLE_POWER_MONITOR    true    // for use with SwitchDoc Lab SunAirPlus
+#define ENABLE_POWER_MONITOR    false    // for use with SwitchDoc Lab SunAirPlus
 
 #if ENABLE_POWER_MONITOR
 // the three channels of the INA3221 named for SunAirPlus Solar Power Controller channels (www.switchdoc.com)
@@ -21,7 +21,7 @@
 
 
 // Watchdog timer
-#define ENABLE_WDT              true
+#define ENABLE_WDT              false
 
 
 // status LED to show when WiFLy is connecting (consider turning off to save power)
