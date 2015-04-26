@@ -9,4 +9,10 @@ The Wifly-MQTT library from https://github.com/lagoudiana/Wifly-MQTT/tree/master
 
 The library used to take measurements from the SunAirPlus INA3221 3 Channel Current / Voltage Monitor is available from https://github.com/switchdoclabs/SDL_Arduino_INA3221.
 
+The configuration of the hardware I use is shown in the following figure. The red board is the Sparkfun Weather Board, with the WiFly module installed, with the antenna the black object pointing to the left.
 
+![alt tag](../images/WeatherStationComponents.jpg)
+
+![My image](greenthegarden.github.com/repository/images/WeatherStationComponents.jpg)
+
+[Alt text](/images/WeatherStationComponents.jpg?raw=true "Optional Title")
