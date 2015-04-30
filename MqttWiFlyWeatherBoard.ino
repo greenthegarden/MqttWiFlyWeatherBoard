@@ -449,9 +449,10 @@ void takeMeasurement(void)
   sunairplus_measurement();
 #endif
 #if ENABLE_WEATHER_METERS
-  windspeed_measurement();
-  winddirection_measurement();
-  rainfall_measurement();
+//  windspeed_measurement();
+//  winddirection_measurement();
+//  rainfall_measurement();
+  weather_meter_measurement();
 #endif
 }
 
@@ -593,6 +594,44 @@ void TEMT6000_measurement()
 #endif
 
 #if ENABLE_WEATHER_METERS
+void weather_meter_measurement()
+{
+  // take wind-direction measurement first
+  // if returns -1 then treat as sensors not connected
+  if (winddirection_measurement())
+  {
+    windspeed_measurement();
+    rainfall_measurement();
+  }
+  else
+  {
+    prog_buffer[0] = '\0';
+    strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
+    mqttClient.publish(prog_buffer,"Weather Meter ERROR");
+  }
+}
+
+byte winddirection_measurement()
+{
+  // wind direction
+  float WM_wdirection = get_wind_direction();  // should return a -1 is disconnected
+  
+  if (WM_wdirection >= 0)
+  {
+    buf[0] = '\0';
+    dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
+  
+    prog_buffer[0] = '\0';
+    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[7])));
+
+    mqttClient.publish(prog_buffer, buf);
+    
+    return 1;
+  }
+  else
+    return 0;
+}
+
 void windspeed_measurement()
 {
   // windspeed unit conversion
@@ -603,20 +642,6 @@ void windspeed_measurement()
   
   prog_buffer[0] = '\0';
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[6])));
-
-  mqttClient.publish(prog_buffer, buf);
-}
-
-void winddirection_measurement()
-{
-  // wind direction
-  float WM_wdirection = get_wind_direction();  // should return a -1 is disconnected
-  
-  buf[0] = '\0';
-  dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
-  
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[7])));
 
   mqttClient.publish(prog_buffer, buf);
 }
