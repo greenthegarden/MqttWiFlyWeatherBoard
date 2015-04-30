@@ -197,7 +197,7 @@ void connect_wifly()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  WiFly.begin();
+//  WiFly.begin();
 
   if (!WiFly.join(ssid, passphrase, mode))
   {
@@ -205,7 +205,7 @@ void connect_wifly()
 #if ENABLE_WDT
     wdt_reset();
 #endif
-    delay(AFTER_ERROR_DELAY);
+//    delay(AFTER_ERROR_DELAY);
   } 
   else {
     wifly_connected = true;
@@ -254,13 +254,13 @@ void publish_measurements()
       
       mqttClient.disconnect();
     } 
-    else
-    {
-#if ENABLE_WDT
-      wdt_reset();
-#endif
-      delay(AFTER_ERROR_DELAY);
-    }
+//    else
+//    {
+//#if ENABLE_WDT
+//      wdt_reset();
+//#endif
+//      delay(AFTER_ERROR_DELAY);
+//    }
   }
 }
 
@@ -288,6 +288,8 @@ void setup()
   Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 
+  WiFly.begin();
+  
   connect_wifly();
   
 #if USE_STATUS_LED
@@ -305,10 +307,10 @@ void setup()
       strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
       mqttClient.publish(prog_buffer, "Connected to broker");
     } 
-    else
-    {
-      delay(AFTER_ERROR_DELAY);
-    }
+//    else
+//    {
+//      delay(AFTER_ERROR_DELAY);
+//    }
   }
 
   // Configure sensors

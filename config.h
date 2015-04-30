@@ -8,7 +8,7 @@
 #define ENABLE_HUMIDITY         true
 #define ENABLE_PRESSURE         true
 #define ENABLE_LIGHT            true
-#define ENABLE_WEATHER_METERS   false
+#define ENABLE_WEATHER_METERS   true
 
 #define ENABLE_POWER_MONITOR    true    // for use with SwitchDoc Lab SunAirPlus
 
