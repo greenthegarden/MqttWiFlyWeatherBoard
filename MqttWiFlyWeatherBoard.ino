@@ -143,6 +143,7 @@ char buf[12];
 
 // global variable definitions
 unsigned long previousMillis = 0;
+boolean  pressure_sensor_status = false;
 #if ENABLE_WEATHER_METERS
 unsigned int windRPM     = 0;
 unsigned int stopped     = 0;
@@ -333,7 +334,10 @@ void setup()
   prog_buffer[0] = '\0';
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
   if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
+  {
+    pressure_sensor_status = true;
     mqttClient.publish(prog_buffer,"BMP085 init success");
+  }
   else
     mqttClient.publish(prog_buffer,"BMP085 init failure");
 #endif
@@ -440,7 +444,8 @@ void takeMeasurement(void)
   humidity_measurement();
 #endif
 #if ENABLE_PRESSURE
-  BMP085_measurement();
+  if ( pressure_sensor_status )
+    BMP085_measurement();
 #endif
 #if ENABLE_LIGHT
   TEMT6000_measurement();
