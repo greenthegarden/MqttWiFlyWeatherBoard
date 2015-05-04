@@ -117,7 +117,6 @@ reboot
 
 #include "config.h"
 
-
 #if ENABLE_WDT
 #include <avr/wdt.h>  // required for AVR watchdog timer
 #endif
@@ -177,18 +176,12 @@ float get_wind_direction();
 #endif
 
 
-// callback definition for MQTT
-void callback(char* topic, uint8_t* payload, unsigned int length)
-{
-  // nothing to do here!!
-}
+// WiFly setup and connection routines
 
+const byte wifly_failed_connections_max = 2	// reset wifly after this many failed connections
+byte wifly_failed_connections = 0
 
-WiFlyClient wiflyClient;
-PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
-
-
-void connect_wifly()
+void wifly_connect()
 {
 #if ENABLE_WDT
   wdt_reset();
@@ -203,18 +196,43 @@ void connect_wifly()
   if (!WiFly.join(ssid, passphrase, mode))
   {
     wifly_connected = false;
+    wifly_failed_connect_count++;
 #if ENABLE_WDT
     wdt_reset();
 #endif
 //    delay(AFTER_ERROR_DELAY);
-  } 
+  }
   else {
     wifly_connected = true;
+    wifly_failed_connect_count = 0;
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
   }
 }
+
+void wifly_configure()
+{ 
+  // Configure WiFly
+  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
+  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
+
+  WiFly.begin();
+  
+  wifly_connect();
+}
+
+
+// MQTT related routines
+
+// callback definition for MQTT
+void callback(char* topic, uint8_t* payload, unsigned int length)
+{
+  // nothing to do here!!
+}
+
+WiFlyClient wiflyClient;
+PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
 
 void publish_measurements()
 {
@@ -286,12 +304,14 @@ void setup()
   delay(5000);
 
   // Configure WiFly
-  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
-  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
-
-  WiFly.begin();
+  wifly_connect();
   
-  connect_wifly();
+//  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
+//  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
+
+//  WiFly.begin();
+  
+//  wifly_connect();
   
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
@@ -396,6 +416,9 @@ void loop()
     publish_measurements();
   }
 
+  if (wifly_failed_connections > wifly_failed_connections_max)
+    wifly_configure();
+    
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts in loop()
   static unsigned long windstopped = 0;
