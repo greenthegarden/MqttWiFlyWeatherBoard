@@ -103,6 +103,7 @@ const char TEMT6000_light_topic[]     PROGMEM = "weather/measurement/TEMT6000_li
 //#endif
 //#if ENABLE_WEATHER_METERS
 const char wind_spd_topic[]           PROGMEM = "weather/measurement/wind_spd";
+const char wind_spd_max_topic[]       PROGMEM = "weather/measurement/wind_spd_max";
 const char wind_dir_topic[]           PROGMEM = "weather/measurement/wind_dir";
 const char rainfall_topic[]           PROGMEM = "weather/measurement/rain";
 //#endif
@@ -117,13 +118,15 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
                                                   wind_spd_topic,            // idx = 6
                                                   wind_dir_topic,            // idx = 7
                                                   rainfall_topic,            // idx = 8
+                                                  wind_spd_max_topic,        // idx = 9
                                                 };
 
 
 // program constants
 
 #define FLOAT_DECIMAL_PLACES    1
-#define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
+//#define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
+#define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
 #define AFTER_ERROR_DELAY       5000
 
 

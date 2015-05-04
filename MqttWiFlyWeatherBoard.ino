@@ -145,6 +145,7 @@ unsigned long previousMillis = 0;
 boolean  pressure_sensor_status = false;
 #if ENABLE_WEATHER_METERS
 unsigned int windRPM     = 0;
+unsigned int windRPM_max = 0;
 unsigned int stopped     = 0;
 // volatiles are subject to modification by IRQs
 volatile unsigned long tempwindRPM = 0, windtime = 0, windlast = 0, windinterval = 0;
@@ -178,8 +179,8 @@ float get_wind_direction();
 
 // WiFly setup and connection routines
 
-const byte wifly_failed_connections_max = 2	// reset wifly after this many failed connections
-byte wifly_failed_connections = 0
+const byte wifly_failed_connections_max = 2;	// reset wifly after this many failed connections
+byte       wifly_failed_connections     = 0;
 
 void wifly_connect()
 {
@@ -196,7 +197,7 @@ void wifly_connect()
   if (!WiFly.join(ssid, passphrase, mode))
   {
     wifly_connected = false;
-    wifly_failed_connect_count++;
+    wifly_failed_connections++;
 #if ENABLE_WDT
     wdt_reset();
 #endif
@@ -204,7 +205,7 @@ void wifly_connect()
   }
   else {
     wifly_connected = true;
-    wifly_failed_connect_count = 0;
+    wifly_failed_connections = 0;
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
@@ -245,7 +246,7 @@ void publish_measurements()
 #endif
 
   if (!wifly_connected)
-    connect_wifly();
+    wifly_connect();
 
 #if ENABLE_WDT
   wdt_reset();
@@ -411,9 +412,11 @@ void loop()
 
   if(currentMillis - previousMillis >= MEASUREMENT_INTERVAL)
   {
-    previousMillis = currentMillis;   
+    previousMillis = currentMillis; 
 
     publish_measurements();
+    
+    windRPM_max = 0.0;    // reset to get strongest gust in each measurement period
   }
 
   if (wifly_failed_connections > wifly_failed_connections_max)
@@ -428,6 +431,8 @@ void loop()
   {
     gotwspeed = false;
     windRPM = word(tempwindRPM);
+    if (windRPM > windRPM_max)
+      windRPM_max = windRPM;
     windstopped = millis() + ZERODELAY;  // save this timestamp
   }  
 
@@ -663,7 +668,9 @@ byte winddirection_measurement()
 void windspeed_measurement()
 {
   // windspeed unit conversion
-  float WM_wspeed = float(windRPM) / WIND_RPM_TO_KNOTS;
+  float WM_wspeed = 0.0;
+
+  WM_wspeed = float(windRPM) / WIND_RPM_TO_KNOTS;
   
   buf[0] = '\0';
   dtostrf(WM_wspeed,1,FLOAT_DECIMAL_PLACES, buf);
@@ -672,6 +679,16 @@ void windspeed_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[6])));
 
   mqttClient.publish(prog_buffer, buf);
+  
+  WM_wspeed = float(windRPM_max) / WIND_RPM_TO_KNOTS;
+  
+  buf[0] = '\0';
+  dtostrf(WM_wspeed,1,FLOAT_DECIMAL_PLACES, buf);
+  
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[9])));
+
+  mqttClient.publish(prog_buffer, buf);  
 }
 
 void rainfall_measurement()
