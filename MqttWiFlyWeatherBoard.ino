@@ -192,7 +192,7 @@ void wifly_connect()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-//  WiFly.begin();
+  WiFly.begin();
 
   if (!WiFly.join(ssid, passphrase, mode))
   {
@@ -201,9 +201,9 @@ void wifly_connect()
 #if ENABLE_WDT
     wdt_reset();
 #endif
-//    delay(AFTER_ERROR_DELAY);
   }
-  else {
+  else
+  {
     wifly_connected = true;
     wifly_failed_connections = 0;
 #if USE_STATUS_LED
@@ -218,9 +218,9 @@ void wifly_configure()
   Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 
-  WiFly.begin();
+//  WiFly.begin();
   
-  wifly_connect();
+//  wifly_connect();
 }
 
 
@@ -274,13 +274,6 @@ void publish_measurements()
       
       mqttClient.disconnect();
     } 
-//    else
-//    {
-//#if ENABLE_WDT
-//      wdt_reset();
-//#endif
-//      delay(AFTER_ERROR_DELAY);
-//    }
   }
 }
 
@@ -305,14 +298,9 @@ void setup()
   delay(5000);
 
   // Configure WiFly
+  wifly_configure();
+  
   wifly_connect();
-  
-//  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
-//  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
-
-//  WiFly.begin();
-  
-//  wifly_connect();
   
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
@@ -329,10 +317,6 @@ void setup()
       strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
       mqttClient.publish(prog_buffer, "Connected to broker");
     } 
-//    else
-//    {
-//      delay(AFTER_ERROR_DELAY);
-//    }
   }
 
   // Configure sensors
@@ -357,16 +341,16 @@ void setup()
   if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
   {
     pressure_sensor_status = true;
-    mqttClient.publish(prog_buffer,"BMP085 init success");
+    if (mqttClient.connected())
+      mqttClient.publish(prog_buffer,"BMP085 init success");
   }
   else
-    mqttClient.publish(prog_buffer,"BMP085 init failure");
+    if (mqttClient.connected())
+      mqttClient.publish(prog_buffer,"BMP085 init failure");
 #endif
 
 #if ENABLE_POWER_MONITOR
   ina3221.begin();
-  
-  sunairplus_measurement();
 #endif
 
 #if ENABLE_WEATHER_METERS
@@ -389,7 +373,8 @@ void setup()
   interrupts();
 #endif
 
-  mqttClient.disconnect();
+  if (mqttClient.connected())
+    mqttClient.disconnect();
   
 #if ENABLE_WDT
   wdt_enable(WDTO_8S); // Watchdog timer set for eight seconds
@@ -420,7 +405,10 @@ void loop()
   }
 
   if (wifly_failed_connections > wifly_failed_connections_max)
-    wifly_configure();
+  {
+    delay(AFTER_ERROR_DELAY);
+    wifly_failed_connections = 0;
+  }
     
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts in loop()

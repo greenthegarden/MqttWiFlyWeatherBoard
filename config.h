@@ -127,7 +127,7 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
 #define FLOAT_DECIMAL_PLACES    1
 //#define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
 #define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
-#define AFTER_ERROR_DELAY       5000
+#define AFTER_ERROR_DELAY       60000
 
 
 // constant conversion factors
