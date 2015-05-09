@@ -44,6 +44,7 @@ char mqtt_client_id[]         = "weather";
 #define MQTT_MAX_PACKET_SIZE    168
 #define MQTT_KEEPALIVE          300
 boolean wifly_connected       = false;
+byte measurement_count        = 0;
 
 
 const byte BUFFER_SIZE        = 42;
@@ -87,6 +88,8 @@ PGM_P const sunairplus_topics[]       PROGMEM = { battery_voltage_topic,     // 
 
 // measurement topics
 
+const char MEASUREMENTS_START[]       PROGMEM = "weather/measurement/START";
+const char MEASUREMENTS_END[]         PROGMEM = "weather/measurement/END";
 //#if ENABLE_TEMP
 const char SHT15_temp_topic[]         PROGMEM = "weather/measurement/SHT15_temp";
 //#endif
@@ -119,6 +122,8 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
                                                   wind_dir_topic,            // idx = 7
                                                   rainfall_topic,            // idx = 8
                                                   wind_spd_max_topic,        // idx = 9
+                                                  MEASUREMENTS_START,        // idx = 10
+                                                  MEASUREMENTS_END,          // idx = 11
                                                 };
 
 

@@ -452,6 +452,11 @@ void takeMeasurement(void)
 //  {
 //    connect_mqtt();
 //  }
+
+  // publish measurement start topic
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[10])));
+  mqttClient.publish(prog_buffer, "");
   
 #if ENABLE_TEMP
   temperature_measurement();
@@ -475,6 +480,18 @@ void takeMeasurement(void)
 //  rainfall_measurement();
   weather_meter_measurement();
 #endif
+
+  // publish measurement end topic with message
+  // message is number of measurements included
+  
+  buf[0] = '\0';
+  itoa(measurement_count, buf, 10);
+
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[11])));
+  mqttClient.publish(prog_buffer, buf);
+  
+  measurement_count = 0;
 }
 
 #if ENABLE_TEMP
@@ -491,6 +508,8 @@ void temperature_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[0])));
 
   mqttClient.publish(prog_buffer, buf);
+  
+  measurement_count++;
 }
 #endif
 
@@ -508,6 +527,8 @@ void humidity_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[1])));
 
   mqttClient.publish(prog_buffer, buf);
+  
+  measurement_count++;
 }
 #endif
 
@@ -544,6 +565,8 @@ void BMP085_measurement()
       dtostrf(BMP085_temp,1,FLOAT_DECIMAL_PLACES, buf);
       
       mqttClient.publish(prog_buffer, buf);
+      
+      measurement_count++
 
       prog_buffer[0] = '\0';
       strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[3])));
@@ -571,18 +594,24 @@ void BMP085_measurement()
           dtostrf(BMP085_pressure,1,FLOAT_DECIMAL_PLACES, buf);
 
           mqttClient.publish(prog_buffer, buf);
+          
+          measurement_count++
         }
         else
           mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_GET");
+          measurement_count++;
       }    
       else
         mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_START");
+        measurement_count++;
     }
     else
       mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_GET");
+      measurement_count++;
   }
   else
     mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_START");
+    measurement_count++;
 }
 #endif
 
@@ -600,6 +629,8 @@ void TEMT6000_measurement()
 
   mqttClient.publish(prog_buffer, buf);
 
+  measurement_count++;
+
   // convert TEMT6000_light_raw voltage value to percentage
   //map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
@@ -611,6 +642,8 @@ void TEMT6000_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[5])));
 
   mqttClient.publish(prog_buffer, buf);
+
+  measurement_count++;
 }
 #endif
 
@@ -647,6 +680,8 @@ byte winddirection_measurement()
 
     mqttClient.publish(prog_buffer, buf);
     
+    measurement_count++;
+    
     return 1;
   }
   else
@@ -668,6 +703,8 @@ void windspeed_measurement()
 
   mqttClient.publish(prog_buffer, buf);
   
+  measurement_count++;
+
   WM_wspeed = float(windRPM_max) / WIND_RPM_TO_KNOTS;
   
   buf[0] = '\0';
@@ -677,6 +714,8 @@ void windspeed_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[9])));
 
   mqttClient.publish(prog_buffer, buf);  
+    
+  measurement_count++;
 }
 
 void rainfall_measurement()
@@ -691,6 +730,8 @@ void rainfall_measurement()
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[8])));
 
   mqttClient.publish(prog_buffer, buf);
+  
+  measurement_count++;
 }
 #endif
 
