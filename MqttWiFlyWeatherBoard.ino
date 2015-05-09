@@ -455,7 +455,7 @@ void takeMeasurement(void)
 
   // publish measurement start topic
   prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[10])));
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[10])));
   mqttClient.publish(prog_buffer, "");
   
 #if ENABLE_TEMP
@@ -488,7 +488,7 @@ void takeMeasurement(void)
   itoa(measurement_count, buf, 10);
 
   prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[11])));
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[11])));
   mqttClient.publish(prog_buffer, buf);
   
   measurement_count = 0;
