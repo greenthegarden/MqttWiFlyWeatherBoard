@@ -5,6 +5,7 @@
 #
 #---------------------------------------------------------------------------------------
 
+# see https://wiki.python.org/moin/ConfigParserShootout
 from configobj import ConfigObj
 config = ConfigObj('weatherPublisher.cfg')
 
@@ -20,6 +21,7 @@ print("{0}".format("MQTT BoM WOW and Twitter uploader"))
 REPORT_INTERVAL = config['REPORT_INTERVAL']
 assert REPORT_INTERVAL > 2, "reportInterval must be greater than interval between measurements: %r" % 5
 
+print("Reports published every {0} minutes".format(REPORT_INTERVAL))
 
 # global variables
 tempc           = config['var_init']['tempc']
@@ -45,19 +47,13 @@ import tweepy
 # for information about setting up Twitter see
 # http://raspi.tv/2014/tweeting-with-python-tweepy-on-the-raspberry-pi-part-2-pi-twitter-app-series
 
-# Consumer keys and access tokens, used for OAuth
-#CONSUMER_KEY        = config['twitter_cfg']['CONSUMER_KEY']
-#CONSUMER_SECRET     = config['twitter_cfg']['CONSUMER_SECRET']
-#ACCESS_TOKEN        = config['twitter_cfg']['ACCESS_TOKEN']
-#ACCESS_TOKEN_SECRET = config['twitter_cfg']['ACCESS_TOKEN_SECRET']
-
 # OAuth process, using the keys and tokens
 auth = tweepy.OAuthHandler(config['twitter_cfg']['CONSUMER_KEY'],
-													 config['twitter_cfg']['CONSUMER_SECRET']
-													 )
+                           config['twitter_cfg']['CONSUMER_SECRET'],
+                           )
 auth.set_access_token(config['twitter_cfg']['ACCESS_TOKEN'],
-											config['twitter_cfg']['ACCESS_TOKEN_SECRET']
-											)
+                      config['twitter_cfg']['ACCESS_TOKEN_SECRET'],
+                      )
 
 # Creation of the actual interface, using authentication
 api = tweepy.API(auth)
@@ -80,12 +76,14 @@ def send_data_to_twitter() :
 			if cnt < len(twitter_report) :
 				twitter_str += ", "
 
+		assert len(twitter_str) < 140, "Twitter messages must be less than 140 characters!"
+
 		print("Twitter string: {0}".format(twitter_str))
 
-		try :
-			api.update_status(status=twitter_str)
-		except :
-			print "Twitter post error"
+#		try :
+		api.update_status(status=twitter_str)
+#		except :
+#			print "Twitter post error"
 
 	twitter_report = {}	# reset report
 
@@ -129,38 +127,38 @@ BOM_WOW_URL             = config['bom_wow_cfg']['BOM_WOW_URL']
 
 # payload initialised with BoM WoW siteid and siteAuthenticationKey
 payload = {'siteid': config['bom_wow_cfg']['SITE_ID'],
-					 'siteAuthenticationKey': config['bom_wow_cfg']['SITE_AUTHENTICATION_KEY']
-					 }
+           'siteAuthenticationKey': config['bom_wow_cfg']['SITE_AUTHENTICATION_KEY'],
+           }
 
 print("Uploading to Site ID {0}".format(payload.get('siteid')))
 print("Using Site Authentication Key {0}".format(payload.get('siteAuthenticationKey')))
 
 def send_data_to_wow() :
 
-			# add time to report
-			# The date must be in the following format: YYYY-mm-DD HH:mm:ss,
-			# where ':' is encoded as %3A, and the space is encoded as either '+' or %20.
-			# An example, valid date would be: 2011-02-29+10%3A32%3A55, for the 2nd of Feb, 2011 at 10:32:55.
-			# Note that the time is in 24 hour format.
-			# Also note that the date must be adjusted to UTC time - equivalent to the GMT time zone.
-			format = "%Y-%m-%d+%H:%M:%S"
-			datestr = msg_arrival_time_utc.strftime(format)
-			datestr = datestr.replace(':', '%3A')
-			payload['dateutc'] = datestr
+	# add time to report
+	# The date must be in the following format: YYYY-mm-DD HH:mm:ss,
+	# where ':' is encoded as %3A, and the space is encoded as either '+' or %20.
+	# An example, valid date would be: 2011-02-29+10%3A32%3A55, for the 2nd of Feb, 2011 at 10:32:55.
+	# Note that the time is in 24 hour format.
+	# Also note that the date must be adjusted to UTC time - equivalent to the GMT time zone.
+	format = "%Y-%m-%d+%H:%M:%S"
+	datestr = msg_arrival_time_utc.strftime(format)
+	datestr = datestr.replace(':', '%3A')
+	payload['dateutc'] = datestr
 
-			# send report
+	# send report
 
-			print("payload local time: {0}".format(msg_arrival_time_local))
-			print("payload to be sent: {0}".format(payload))
+	print("payload local time: {0}".format(msg_arrival_time_local))
+	print("payload to be sent: {0}".format(payload))
 
-			# POST with form-encoded data1
-#			r = requests.post(BOM_WOW_URL, data=payload)
+	# POST with form-encoded data1
+#	r = requests.post(BOM_WOW_URL, data=payload)
 
-			# All requests will return a status code.
-			# A success is indicated by 200.
-			# Anything else is a failure.
-			# A human readable error message will accompany all errors in JSON format.
-#			print("POST request status code: {0}".format(r.json))
+	# All requests will return a status code.
+	# A success is indicated by 200.
+	# Anything else is a failure.
+	# A human readable error message will accompany all errors in JSON format.
+#	print("POST request status code: {0}".format(r.json))
 
 
 #---------------------------------------------------------------------------------------
@@ -344,9 +342,9 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 client.connect(config['mqtt_configuration']['MQTT_BROKER_IP'],
-							 int(config['mqtt_configuration']['MQTT_BROKER_PORT']),
-							 int(config['mqtt_configuration']['MQTT_BROKER_PORT_TIMEOUT'])
-							 )
+               int(config['mqtt_configuration']['MQTT_BROKER_PORT']),
+               int(config['mqtt_configuration']['MQTT_BROKER_PORT_TIMEOUT'])
+               )
 
 client.loop_start()
 
