@@ -1,0 +1,4 @@
+# files with private access keys to prevent uploading to git
+networkConfig.h
+python/weatherPublisher.cfg
+

@@ -1,21 +1,38 @@
 #!/usr/bin/env python
 
-reportInterval = 15					# interval (minutes) at which a new report is sent to BoM WOW
-assert reportInterval > 2, "reportInterval must be greater than interval between measurements: %r" % 5
+#---------------------------------------------------------------------------------------
+# Load configuration values
+#
+#---------------------------------------------------------------------------------------
+
+from configobj import ConfigObj
+config = ConfigObj('weatherPublisher.cfg')
+
+print("{0}".format("MQTT BoM WOW and Twitter uploader"))
+
+
+#---------------------------------------------------------------------------------------
+# Configure global variables
+#
+#---------------------------------------------------------------------------------------
+
+# interval (minutes) at which a new report is published
+REPORT_INTERVAL = config['REPORT_INTERVAL']
+assert REPORT_INTERVAL > 2, "reportInterval must be greater than interval between measurements: %r" % 5
 
 
 # global variables
-tempc = -100
+tempc           = config['var_init']['tempc']
 # to keep track of daily data (midnight to midnight)
-tempc_daily_max = -100
-tempc_daily_min = 100
-rainmmdaily = 0
+tempc_daily_max = config['var_init']['tempc_daily_max']
+tempc_daily_min = config['var_init']['tempc_daily_min']
+rainmmdaily     = config['var_init']['rainmmdaily']
 # global variables to keep track of day/night data (9am to 9am)
-tempc_to9_max = -100
-tempc_to9_min = 100
-rainmm9am = 0
+tempc_to9_max   = config['var_init']['tempc_to9_max']
+tempc_to9_min   = config['var_init']['tempc_to9_min']
+rainmm9am       = config['var_init']['rainmm9am']
 # global variables to keep track of hourly data
-rainmm = 0
+rainmm          = config['var_init']['rainmm']
 
 
 #---------------------------------------------------------------------------------------
@@ -29,21 +46,23 @@ import tweepy
 # http://raspi.tv/2014/tweeting-with-python-tweepy-on-the-raspberry-pi-part-2-pi-twitter-app-series
 
 # Consumer keys and access tokens, used for OAuth
-CONSUMER_KEY ="uc2RUHCujX8OFdyk0hAgBk1ev"
-CONSUMER_SECRET = "DPikuFEv9Cd9ugWwFmfscuDdwRusfRjiwz5Mt3f15TGarQotva"
-ACCESS_TOKEN = "1502931132-tcaMqjBlok2xc10XcPmr9oHaifjh66lmqFf0nVf"
-ACCESS_TOKEN_SECRET = "cjDnLXtqX3vjKYwX9agp0KjsedjgZUMWVHy4wEnUacSyn"
+#CONSUMER_KEY        = config['twitter_cfg']['CONSUMER_KEY']
+#CONSUMER_SECRET     = config['twitter_cfg']['CONSUMER_SECRET']
+#ACCESS_TOKEN        = config['twitter_cfg']['ACCESS_TOKEN']
+#ACCESS_TOKEN_SECRET = config['twitter_cfg']['ACCESS_TOKEN_SECRET']
 
 # OAuth process, using the keys and tokens
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+auth = tweepy.OAuthHandler(config['twitter_cfg']['CONSUMER_KEY'],
+													 config['twitter_cfg']['CONSUMER_SECRET']
+													 )
+auth.set_access_token(config['twitter_cfg']['ACCESS_TOKEN'],
+											config['twitter_cfg']['ACCESS_TOKEN_SECRET']
+											)
 
 # Creation of the actual interface, using authentication
 api = tweepy.API(auth)
 
-#api.update_status(status="Contact made!!")
-
-twitter_prefix = "Weather @ Home => "
+TWITTER_PREFIX = config['twitter_cfg']['TWITTER_PREFIX']
 
 twitter_report = {}
 
@@ -51,7 +70,7 @@ def send_data_to_twitter() :
 
 	global twitter_report
 
-	twitter_str = twitter_prefix
+	twitter_str = TWITTER_PREFIX
 	cnt = 0
 
 	if len(twitter_report) > 1 :
@@ -69,7 +88,6 @@ def send_data_to_twitter() :
 			print "Twitter post error"
 
 	twitter_report = {}	# reset report
-
 
 
 #---------------------------------------------------------------------------------------
@@ -105,18 +123,17 @@ import json
 # http://wow.metoffice.gov.uk/automaticreading?siteid=123456&siteAuthenticationKey=654321&dateutc=2011-02-02+10%3A32%3A55&winddir=230&windspeedmph=12&windgustmph=12& windgustdir=25&humidity=90&dewptf=68.2&tempf=70&rainin=0&dailyrainin=5&baromin=29.1&soiltempf=25&soilmoisture=25&visibility=25&softwaretype=weathersoftware1.0
 
 # details for Bom WoW site
-url = 'http://wow.metoffice.gov.uk/automaticreading?'
-
-siteid = '917806001'
-siteAuthenticationKey = '822505'	# 6 digit number
+BOM_WOW_URL             = config['bom_wow_cfg']['BOM_WOW_URL']
+#SITE_ID                 = config['bom_wow_cfg']['SITE_ID']
+#SITE_AUTHENTICATION_KEY = config['bom_wow_cfg']['SITE_AUTHENTICATION_KEY']	# 6 digit number
 
 # payload initialised with BoM WoW siteid and siteAuthenticationKey
-payload = {'siteid': siteid, 'siteAuthenticationKey': siteAuthenticationKey}
+payload = {'siteid': config['bom_wow_cfg']['SITE_ID'],
+					 'siteAuthenticationKey': config['bom_wow_cfg']['SITE_AUTHENTICATION_KEY']
+					 }
 
-print("{0}".format("MQTT BoM WOW uploader"))
 print("Uploading to Site ID {0}".format(payload.get('siteid')))
 print("Using Site Authentication Key {0}".format(payload.get('siteAuthenticationKey')))
-
 
 def send_data_to_wow() :
 
@@ -137,14 +154,13 @@ def send_data_to_wow() :
 			print("payload to be sent: {0}".format(payload))
 
 			# POST with form-encoded data1
-#			r = requests.post(url, data=payload)
+#			r = requests.post(BOM_WOW_URL, data=payload)
 
 			# All requests will return a status code.
 			# A success is indicated by 200.
 			# Anything else is a failure.
 			# A human readable error message will accompany all errors in JSON format.
 #			print("POST request status code: {0}".format(r.json))
-
 
 
 #---------------------------------------------------------------------------------------
@@ -223,9 +239,8 @@ def on_connect(client, userdata, flags, rc) :
 	# the subscriptions will be renewed when reconnecting.
 
 	# weather station measurement topics
-	client.subscribe("weather/measurement/#")
-	client.subscribe("weather/sunairplus/#")
-
+	for topic in config['mqtt_topics']['MEASUREMENT_TOPICS'] :
+		client.subscribe(topic)
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg) :
@@ -246,11 +261,11 @@ def on_message(client, userdata, msg) :
 	bom_wow_report = {}
 
   # temperature data
-	if msg.topic == "weather/measurement/SHT15_temp" :
+	if msg.topic == config['mqtt_data_topics']['TEMPERATURE_TOPIC'] :
   	# in degrees Celcius
    	# convert to degrees Fahrenheit
 		tempc_msg_arrival_time = msg_arrival_time_local
-		twitter_report['Temperature'] = '{0:.1f}'.format(msg.payload)	# add as string rather than float
+		twitter_report['Temperature'] = msg.payload	# add as string rather than float
 		tempc = float(msg.payload)
 		bom_wow_report['tempf'] = '{0:.1f}'.format(degCtoF(tempc))
 		payload.update(bom_wow_report)
@@ -262,7 +277,7 @@ def on_message(client, userdata, msg) :
 			tempc_daily_min = tempc
 			client.publish("weather/temperature/daily_min", str(tempc_daily_min))
 			client.publish("weather/temperature/daily_min_time", str(msg_arrival_time_local))
-	if msg.topic == "weather/measurement/SHT15_humidity" :
+	if msg.topic == config['mqtt_data_topics']['HUMIDITY_TOPIC'] :
   	# as a percentage
 		twitter_report['Humidity'] = msg.payload	# add as string rather than float
 		humidity = float(msg.payload)
@@ -270,14 +285,14 @@ def on_message(client, userdata, msg) :
 		payload.update(bom_wow_report)
 # 		if ( msg_arrival_time_local - tempc_msg_arrival_time ) < datetime.timedelta(seconds=2) :
 # 			dewpoint = dewpoint_calc(float(report.get('tempc',tempc)), humidity)
-				dewpoint_str = '{0:.1f}'.format(dewpoint)
+#				dewpoint_str = '{0:.1f}'.format(dewpoint)
 # 			client.publish("weather/dewpoint/SHT15_dewpoint", dewpoint_str)
 # 			report['dewptf'] = dewpoint_str
 # 			payload.update(report)
 # weather station will not report measurements from pressure sensor
 # if error code generated when sensor is initialised, or
 # if error code generated when taking reading
-# 	if msg.topic == "weather/measurement/BMP085_pressure" :
+# 	if msg.topic == config['mqtt_data_topics']['PRESSURE_TOPIC'] :
 #   	# in mbar
 #   	# convert to inches
 #   	# 1 millibar (or hectopascal/hPa), is equivalent to 0.02953 inches of mercury (Hg).
@@ -286,18 +301,18 @@ def on_message(client, userdata, msg) :
 # 		payload.update(bom_wow_report)
 # weather station will not report measurements from the weather sensors
 # (wind and rain) if error code generated by wind direction reading
-	if msg.topic == "weather/measurement/wind_dir" :
+	if msg.topic == config['mqtt_data_topics']['WIND_DIR_TOPIC'] :
   	# in degrees
-		twitter_report['Wind_Dir'] = wind_degrees_to_direction(msg.payload(
+		twitter_report['Wind_Dir'] = wind_degrees_to_direction(msg.payload)
 		bom_wow_report['winddir'] = msg.payload
 		payload.update(bom_wow_report)
-	if msg.topic == "weather/measurement/wind_spd" :
+	if msg.topic == config['mqtt_data_topics']['WIND_SPEED_TOPIC'] :
   	# in knots
   	# convert to miles per hour
 		twitter_report['Wind_Spd'] = msg.payload	# add as string rather than float
 		bom_wow_report['windspeedmph'] = '{0:.1f}'.format(float(msg.payload) * 1.15078)
 		payload.update(bom_wow_report)
-	if msg.topic == "weather/measurement/rain" :
+	if msg.topic == config['mqtt_data_topics']['RAIN_TOPIC'] :
   	# in millimetres
   	# convert to inches
   	# resets automatically on hour
@@ -313,11 +328,11 @@ def on_message(client, userdata, msg) :
 		bom_wow_report['dailyrainin'] = (rainmmdaily*nu.mm)/nu.inch
 		payload.update(bom_wow_report)
 		client.publish("weather/rainfall/sincemidnight", str(rainmmdaily))
-	if msg.topic == "weather/sunairplus/battery_voltage" :
+	if msg.topic == config['mqtt_data_topics']['BATTERY_VOLTAGE_TOPIC'] :
 		twitter_report['Battery_Voltage'] = msg.payload
-	if msg.topic == "weather/sunairplus/solar_voltage" :
+	if msg.topic == config['mqtt_data_topics']['SOLAR_VOLTAGE_TOPIC'] :
 		twitter_report['Solar_Voltage'] = msg.payload
-	if msg.topic == "weather/sunairplus/output_voltage" :
+	if msg.topic == config['mqtt_data_topics']['OUTPUT_VOLTAGE_TOPIC'] :
 		twitter_report['Output_Voltage'] = msg.payload
 
 # Definition of MQTT client and connection to MQTT Broker
@@ -328,9 +343,10 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-mqtt_broker_ip = "192.168.1.55"
-#mqtt_broker_ip = "localhost"
-client.connect(mqtt_broker_ip, 1883, 60) # address of broker, broker port,
+client.connect(config['mqtt_configuration']['MQTT_BROKER_IP'],
+							 int(config['mqtt_configuration']['MQTT_BROKER_PORT']),
+							 int(config['mqtt_configuration']['MQTT_BROKER_PORT_TIMEOUT'])
+							 )
 
 client.loop_start()
 
@@ -380,10 +396,9 @@ def publish_weather() :
 
 		sentreportwithtime = msg_arrival_time_local
 
-
 # define schedules
 
-schedule.every(reportInterval).minutes.do(publish_weather)
+schedule.every(int(REPORT_INTERVAL)).minutes.do(publish_weather)
 schedule.every().hour.at(':00').do(zero_data_on_hour)
 schedule.every().day.at("9:00").do(zero_data_at_9)
 schedule.every().day.at("0:00").do(zero_data_at_midnight)
