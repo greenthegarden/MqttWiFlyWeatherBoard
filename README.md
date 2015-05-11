@@ -12,3 +12,5 @@ The library used to take measurements from the SunAirPlus INA3221 3 Channel Curr
 The configuration of the hardware I use is shown in the following figure. The red board in the top left is the Sparkfun Weather Board. The WiFly module is installed on the top right of the Weather Board, with the antenna the black object pointing to the right. The dark colour board at the bottom left is the SunAirPlus with a solar panel and LIPO battery connected. Note the battery and solar panels were only for testing purposes. When operating I use a 3000mAH LIPO battery and 1.5W solar panel.
 
 ![Weather Station Hardware Components](images/WeatherStationComponents.JPG)
+
+Python code is included to publish the data from the weather station to external sites - at present Twitter and Bom WoW.
