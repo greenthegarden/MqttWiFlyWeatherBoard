@@ -6,6 +6,7 @@ config.filename = 'weatherPublisher.cfg'
 
 #
 config['REPORT_INTERVAL'] = 15
+config['measurement_interval'] = 2
 
 # global variable initialisation
 var_init = {
@@ -19,6 +20,7 @@ var_init = {
 	'rainmm'          : 0,
 	}
 config['var_init'] = var_init
+
 # twitter configuration
 twitter_cfg = {
 	'CONSUMER_KEY'        : "Replace with consumer key!",
@@ -28,6 +30,7 @@ twitter_cfg = {
 	'TWITTER_PREFIX'      : "Weather @ Home => ",
 	}
 config['twitter_cfg'] = twitter_cfg
+
 # BoM WoW configuration
 bom_wow_cfg = {
 	'BOM_WOW_URL'             : 'http://wow.metoffice.gov.uk/automaticreading?',
@@ -35,9 +38,19 @@ bom_wow_cfg = {
 	'SITE_AUTHENTICATION_KEY' : 'Replace with site authentication key!',
 	}
 config['bom_wow_cfg'] = bom_wow_cfg
+
+# mqtt configuration
+mqtt_configuration = {
+	'MQTT_BROKER_IP'           : "192.168.1.55",
+	'MQTT_BROKER_PORT'         : "1883",
+	'MQTT_BROKER_PORT_TIMEOUT' : "60",
+	}
+config['mqtt_configuration'] = mqtt_configuration
+
 # Weather station measurement topics
 config['mqtt_topics'] = {}
 config['mqtt_topics']['MEASUREMENT_TOPICS'] = ['weather/measurement/#', 'weather/sunairplus/#']
+
 # Specific data measurement topics
 mqtt_data_topics = {
 	'TEMPERATURE_TOPIC'     : 'weather/measurement/SHT15_temp',
@@ -51,13 +64,6 @@ mqtt_data_topics = {
 	'OUTPUT_VOLTAGE_TOPIC'  : 'weather/sunairplus/output_voltage',
 	}
 config['mqtt_data_topics'] = mqtt_data_topics
-# mqtt configuration
-mqtt_configuration = {
-	'MQTT_BROKER_IP'           : "192.168.1.55",
-	'MQTT_BROKER_PORT'         : "1883",
-	'MQTT_BROKER_PORT_TIMEOUT' : "60",
-	}
-config['mqtt_configuration'] = mqtt_configuration
 
 
 config.write()

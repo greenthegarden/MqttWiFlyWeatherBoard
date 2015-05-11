@@ -19,23 +19,25 @@ print("{0}".format("MQTT BoM WOW and Twitter uploader"))
 
 # interval (minutes) at which a new report is published
 REPORT_INTERVAL = config['REPORT_INTERVAL']
-assert REPORT_INTERVAL > 2, "reportInterval must be greater than interval between measurements: %r" % 5
+assert REPORT_INTERVAL > 2, "REPORT_INTERVAL must be greater than interval between measurements: %r" % 5
 
 print("Reports published every {0} minutes".format(REPORT_INTERVAL))
 
 # global variables
-tempc           = config['var_init']['tempc']
+tempc           = float(config['var_init']['tempc'])
 # to keep track of daily data (midnight to midnight)
-tempc_daily_max = config['var_init']['tempc_daily_max']
-tempc_daily_min = config['var_init']['tempc_daily_min']
-rainmmdaily     = config['var_init']['rainmmdaily']
+tempc_daily_max = float(config['var_init']['tempc_daily_max'])
+tempc_daily_min = float(config['var_init']['tempc_daily_min'])
+rainmmdaily     = float(config['var_init']['rainmmdaily'])
 # global variables to keep track of day/night data (9am to 9am)
-tempc_to9_max   = config['var_init']['tempc_to9_max']
-tempc_to9_min   = config['var_init']['tempc_to9_min']
-rainmm9am       = config['var_init']['rainmm9am']
+tempc_to9_max   = float(config['var_init']['tempc_to9_max'])
+tempc_to9_min   = float(config['var_init']['tempc_to9_min'])
+rainmm9am       = float(config['var_init']['rainmm9am'])
 # global variables to keep track of hourly data
-rainmm          = config['var_init']['rainmm']
+rainmm          = float(config['var_init']['rainmm'])
 
+#for key, value in config['var_init'].items() :
+#	print ("{0}: {1}".format(key, value))
 
 #---------------------------------------------------------------------------------------
 # Modules and details to support Twitter feed
@@ -80,10 +82,10 @@ def send_data_to_twitter() :
 
 		print("Twitter string: {0}".format(twitter_str))
 
-#		try :
-		api.update_status(status=twitter_str)
-#		except :
-#			print "Twitter post error"
+		try :
+			api.update_status(status=twitter_str)
+		except :
+			print "Twitter post error"
 
 	twitter_report = {}	# reset report
 
@@ -261,9 +263,9 @@ def on_message(client, userdata, msg) :
   # temperature data
 	if msg.topic == config['mqtt_data_topics']['TEMPERATURE_TOPIC'] :
   	# in degrees Celcius
-   	# convert to degrees Fahrenheit
 		tempc_msg_arrival_time = msg_arrival_time_local
 		twitter_report['Temperature'] = msg.payload	# add as string rather than float
+   	# convert to degrees Fahrenheit for Bom WoW
 		tempc = float(msg.payload)
 		bom_wow_report['tempf'] = '{0:.1f}'.format(degCtoF(tempc))
 		payload.update(bom_wow_report)
@@ -282,20 +284,20 @@ def on_message(client, userdata, msg) :
 		bom_wow_report['humidity'] = str(humidity)
 		payload.update(bom_wow_report)
 		if ( msg_arrival_time_local - tempc_msg_arrival_time ) < datetime.timedelta(seconds=2) :
-			dewpoint = dewpoint_calc(float(report.get('tempc',tempc)), humidity)
+			dewpoint = dewpoint_calc(float(bom_wow_report.get('tempc',tempc)), humidity)
 			dewpoint_str = '{0:.1f}'.format(dewpoint)
 			client.publish("weather/dewpoint/SHT15_dewpoint", dewpoint_str)
-#			report['dewptf'] = dewpoint_str
-#			payload.update(report)
+#			bom_wow_report['dewptf'] = dewpoint_str
+#			payload.update(bom_wow_report)
 	# weather station will not report measurements from pressure sensor
 	# if error code generated when sensor is initialised, or
 	# if error code generated when taking reading
 	if msg.topic == config['mqtt_data_topics']['PRESSURE_TOPIC'] :
 		# in mbar
-		# convert to inches
+		twitter_report['Pressure'] = msg.payload
+		# convert to inches for Bom WoW
 		# 1 millibar (or hectopascal/hPa), is equivalent to 0.02953 inches of mercury (Hg).
 		# source: http://weatherfaqs.org.uk/node/72
-		twitter_report['Pressure'] = msg.payload
 #		bom_wow_report['baromin'] = '{0:.1f}'.format(float(msg.payload) * 0.02953)
 #		payload.update(bom_wow_report)
 	# weather station will not report measurements from the weather sensors
@@ -362,7 +364,7 @@ import datetime
 msg_arrival_time_local = datetime.datetime.min    # keep track of the time corresponding to the first data for a new report
 msg_arrival_time_utc   = datetime.datetime.min
 tempc_msg_arrival_time = datetime.datetime.min		# used to ensure tempc measurement is not too old for dewpoint calculation
-sentreportwithtime     = datetime.datetime.now()	# keep track of the time a report was last sent
+sent_report_with_time  = datetime.datetime.now()	# keep track of the time a report was last sent
 
 import schedule
 import time
@@ -386,7 +388,7 @@ def zero_data_at_midnight() :
 
 def publish_weather() :
 
-		global sentreportwithtime
+		global sent_report_with_time
 
 		# ensure the report data is more up-to-date than previously sent message
 		# should prevent repots being sent if sensor is off
@@ -395,7 +397,7 @@ def publish_weather() :
 			send_data_to_wow()
 			send_data_to_twitter()
 
-		sentreportwithtime = msg_arrival_time_local
+		sent_report_with_time = msg_arrival_time_local
 
 # define schedules
 
