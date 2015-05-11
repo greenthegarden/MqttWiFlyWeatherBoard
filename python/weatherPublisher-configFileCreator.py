@@ -42,7 +42,7 @@ config['mqtt_topics']['MEASUREMENT_TOPICS'] = ['weather/measurement/#', 'weather
 mqtt_data_topics = {
 	'TEMPERATURE_TOPIC'     : 'weather/measurement/SHT15_temp',
 	'HUMIDITY_TOPIC'        : 'weather/measurement/SHT15_humidity',
-	'HUMIDITY_TOPIC'        : 'weather/measurement/BMP085_pressure',
+	'PRESSURE_TOPIC'        : 'weather/measurement/BMP085_pressure',
 	'WIND_DIR_TOPIC'        : 'weather/measurement/wind_dir',
 	'WIND_SPEED_TOPIC'      : 'weather/measurement/wind_spd',
 	'RAIN_TOPIC'            : 'weather/measurement/rain',
