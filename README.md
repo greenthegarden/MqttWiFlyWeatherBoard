@@ -13,7 +13,7 @@ The configuration of the hardware I use is shown in the following figure. The re
 
 ![Weather Station Hardware Components](images/WeatherStationComponents.JPG)
 
-Python code is included to publish the data from the weather station to external sites - at present Twitter and Bom WoW.
+Python code is included to publish the data from the weather station to external sites - at present [Twitter](http://twitter.com) and [Bom WoW](http://bom-wow.metoffice.gov.uk/).
 
 The following modules are required to run the Python code:
 * [ConfigObj](https://github.com/DiffSK/configobj)
