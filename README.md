@@ -14,3 +14,12 @@ The configuration of the hardware I use is shown in the following figure. The re
 ![Weather Station Hardware Components](images/WeatherStationComponents.JPG)
 
 Python code is included to publish the data from the weather station to external sites - at present Twitter and Bom WoW.
+
+The following modules are required to run the Python code:
+* [ConfigObj](https://github.com/DiffSK/configobj)
+* [Tweepy](https://github.com/tweepy/tweepy)
+* [requests](https://github.com/kennethreitz/requests)
+* [numericalunits](https://github.com/sbyrnes321/numericalunits)
+* [MQTT](https://pypi.python.org/pypi/paho-mqtt)
+* [schedule](https://github.com/dbader/schedule)
+
