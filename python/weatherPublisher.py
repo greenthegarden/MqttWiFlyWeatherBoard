@@ -89,6 +89,28 @@ def send_data_to_twitter() :
 
 	twitter_report = {}	# reset report
 
+def publish_twitter_string() :
+
+	global twitter_report
+
+	twitter_str = TWITTER_PREFIX
+	cnt = 0
+
+	if len(twitter_report) > 1 :
+		for key, value in twitter_report.iteritems() :
+			twitter_str += key + ": " + value
+			cnt += 1
+			if cnt < len(twitter_report) :
+				twitter_str += ", "
+
+		assert len(twitter_str) < 140, "Twitter messages must be less than 140 characters!"
+
+		print("Twitter string: {0}".format(twitter_str))
+
+		client.publish("weather/twitter/feed", str(twitter_str))
+
+	twitter_report = {}	# reset report
+
 
 #---------------------------------------------------------------------------------------
 # Modules and details to support Bom WoW feed
@@ -161,6 +183,26 @@ def send_data_to_wow() :
 	# Anything else is a failure.
 	# A human readable error message will accompany all errors in JSON format.
 #	print("POST request status code: {0}".format(r.json))
+
+def publish_wow_data_string() :
+
+	# add time to report
+	# The date must be in the following format: YYYY-mm-DD HH:mm:ss,
+	# where ':' is encoded as %3A, and the space is encoded as either '+' or %20.
+	# An example, valid date would be: 2011-02-29+10%3A32%3A55, for the 2nd of Feb, 2011 at 10:32:55.
+	# Note that the time is in 24 hour format.
+	# Also note that the date must be adjusted to UTC time - equivalent to the GMT time zone.
+	format = "%Y-%m-%d+%H:%M:%S"
+	datestr = msg_arrival_time_utc.strftime(format)
+	datestr = datestr.replace(':', '%3A')
+	payload['dateutc'] = datestr
+
+	# publish report
+
+	print("payload local time: {0}".format(msg_arrival_time_local))
+	print("payload to be sent: {0}".format(payload))
+
+	client.publish("weather/bom_wow/feed", str(payload))
 
 
 #---------------------------------------------------------------------------------------
@@ -394,8 +436,11 @@ def publish_weather() :
 		# should prevent repots being sent if sensor is off
 		if ( msg_arrival_time_local > sentreportwithtime ) :
 
-			send_data_to_wow()
-			send_data_to_twitter()
+#			send_data_to_wow()
+#			send_data_to_twitter()
+
+			publish_wow_data_string()
+			publish_twitter_string()
 
 		sent_report_with_time = msg_arrival_time_local
 

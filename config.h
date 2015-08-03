@@ -4,11 +4,18 @@
 
 //#define DEBUG                   false    // turn on DEBUG in libraries
 
+// Define use of sensors
+#define ENABLE_SHT15            true
+#define ENABLE_DHT22            true
+#define ENABLE_BMP085           true
+#define ENABLE_EXTERNAL_LIGHT   true
+#define ENABLE_WEATHER_METERS   true
+
+// Define measurements to take
 #define ENABLE_TEMP             true
 #define ENABLE_HUMIDITY         true
 #define ENABLE_PRESSURE         true
 #define ENABLE_LIGHT            true
-#define ENABLE_WEATHER_METERS   true
 
 #define ENABLE_POWER_MONITOR    true    // for use with SwitchDoc Lab SunAirPlus
 
@@ -66,6 +73,47 @@ PGM_P const status_topics[]           PROGMEM = { wifly_topic,      // idx = 0
                                                   memory_topic,     // idx = 3
                                                 };
 
+// DHT22 status messages
+const char status_ok[]                PROGMEM = "DHT22: OK";
+const char checksum_error[]           PROGMEM = "DHT22: Checksum error";
+const char timeout_error[]            PROGMEM = "DHT22: Time out error";
+const char connect_error[]            PROGMEM = "DHT22: Connect error";
+const char ack_low_error[]            PROGMEM = "DHT22: Ack Low error";
+const char ack_high_error[]           PROGMEM = "DHT22: Ack High error";
+const char unknown_error[]            PROGMEM = "DHT22: Unknown error";
+
+PGM_P const dht22_status_messages[]   PROGMEM = { status_ok,        // idx = 0
+                                                  checksum_error,   // idx = 1
+                                                  timeout_error,    // idx = 2
+                                                  connect_error,    // idx = 3
+                                                  ack_low_error,    // idx = 4
+                                                  ack_high_error,   // idx = 5
+                                                  unknown_error,    // idx = 6
+                                                };
+
+// BMP085 status messages
+
+const char init_success[]             PROGMEM = "BMP085: init success";
+const char init_failure[]             PROGMEM = "BMP085: init failure";
+const char error_pressure_get[]       PROGMEM = "ERR_BMP085_PRESSURE_GET";
+const char error_pressure_start[]     PROGMEM = "ERR_BMP085_PRESSURE_START";
+const char error_temp_get[]           PROGMEM = "ERR_BMP085_TEMP_GET";
+const char error_temp_start[]         PROGMEM = "ERR_BMP085_TEMP_START";
+
+PGM_P const bmp085_status_messages[]  PROGMEM = { init_success,         // idx = 0
+                                                  init_failure,         // idx = 1
+                                                  error_pressure_get,   // idx = 2
+                                                  error_pressure_start, // idx = 3
+                                                  error_temp_get,       // idx = 4
+                                                  error_temp_start,     // idx = 5
+                                                };
+
+// Weather meter messages Weather Meter ERROR
+const char not_connected[]            PROGMEM = "Weather Meter ERROR";
+
+PGM_P const weather_meter_messages[]  PROGMEM = { not_connected,    // idx = 0
+                                                };
+                                                
 // sunairplus measurement topics 
 
 #if ENABLE_POWER_MONITOR
@@ -90,48 +138,42 @@ PGM_P const sunairplus_topics[]       PROGMEM = { battery_voltage_topic,     // 
 
 const char MEASUREMENTS_START[]       PROGMEM = "weather/measurement/START";
 const char MEASUREMENTS_END[]         PROGMEM = "weather/measurement/END";
-//#if ENABLE_TEMP
 const char SHT15_temp_topic[]         PROGMEM = "weather/measurement/SHT15_temp";
-//#endif
-//#if ENABLE_HUMIDITY
+const char DHT22_temp_topic[]         PROGMEM = "weather/measurement/DHT22_temp";
 const char SHT15_humidity_topic[]     PROGMEM = "weather/measurement/SHT15_humidity";
-//#endif
-//#if ENABLE_PRESSURE
+const char DHT22_humidity_topic[]     PROGMEM = "weather/measurement/DHT22_humidity";
 const char BMP085_temp_topic[]        PROGMEM = "weather/measurement/BMP085_temp";
 const char BMP085_pressure_topic[]    PROGMEM = "weather/measurement/BMP085_pressure";
-//#endif
-//#if ENABLE_LIGHT
 const char TEMT6000_light_raw_topic[] PROGMEM = "weather/measurement/TEMT6000_light_raw";
 const char TEMT6000_light_topic[]     PROGMEM = "weather/measurement/TEMT6000_light";
-//#endif
-//#if ENABLE_WEATHER_METERS
 const char wind_spd_topic[]           PROGMEM = "weather/measurement/wind_spd";
 const char wind_spd_max_topic[]       PROGMEM = "weather/measurement/wind_spd_max";
 const char wind_dir_topic[]           PROGMEM = "weather/measurement/wind_dir";
 const char rainfall_topic[]           PROGMEM = "weather/measurement/rain";
-//#endif
 
 //tables to refer to strings
 PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // idx = 0
-                                                  SHT15_humidity_topic,      // idx = 1
-                                                  BMP085_temp_topic,         // idx = 2
-                                                  BMP085_pressure_topic,     // idx = 3
-                                                  TEMT6000_light_raw_topic,  // idx = 4
-                                                  TEMT6000_light_topic,      // idx = 5
-                                                  wind_spd_topic,            // idx = 6
-                                                  wind_dir_topic,            // idx = 7
-                                                  rainfall_topic,            // idx = 8
-                                                  wind_spd_max_topic,        // idx = 9
-                                                  MEASUREMENTS_START,        // idx = 10
-                                                  MEASUREMENTS_END,          // idx = 11
+                                                  DHT22_temp_topic,          // idx = 1
+                                                  SHT15_humidity_topic,      // idx = 2
+                                                  DHT22_humidity_topic,      // idx = 3
+                                                  BMP085_temp_topic,         // idx = 4
+                                                  BMP085_pressure_topic,     // idx = 5
+                                                  TEMT6000_light_raw_topic,  // idx = 6
+                                                  TEMT6000_light_topic,      // idx = 7
+                                                  wind_dir_topic,            // idx = 8
+                                                  wind_spd_topic,            // idx = 9
+                                                  wind_spd_max_topic,        // idx = 10
+                                                  rainfall_topic,            // idx = 11
+                                                  MEASUREMENTS_START,        // idx = 12
+                                                  MEASUREMENTS_END,          // idx = 13
                                                 };
 
 
 // program constants
 
 #define FLOAT_DECIMAL_PLACES    1
-//#define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
-#define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
+#define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
+//#define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
 #define AFTER_ERROR_DELAY       60000
 
 
@@ -157,6 +199,7 @@ const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result
 #define   RF_RTS       6
 #define   EOC          8
 #define   XCLR         9
+#define   DHT22_PIN    10
 // (the following three are predefined)
 // #define MOSI        11
 // #define MISO        12
