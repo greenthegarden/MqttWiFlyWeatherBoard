@@ -10,6 +10,7 @@
 #define ENABLE_BMP085           true
 #define ENABLE_EXTERNAL_LIGHT   true
 #define ENABLE_WEATHER_METERS   true
+#define ENABLE_WIND_DIR_AVERAGING true
 
 // Define measurements to take
 #define ENABLE_TEMP             true
@@ -56,6 +57,7 @@ byte measurement_count        = 0;
 
 const byte BUFFER_SIZE        = 42;
 char prog_buffer[BUFFER_SIZE];
+char mess_buffer[BUFFER_SIZE];
 
 
 // MQTT topic definitions
@@ -66,12 +68,24 @@ const char wifly_topic[]              PROGMEM = "weather/status/wifly";
 const char sensor_topic[]             PROGMEM = "weather/status/sensor";
 const char battery_topic[]            PROGMEM = "weather/status/battery";
 const char memory_topic[]             PROGMEM = "weather/status/memory";
+const char sht15_topic[]              PROGMEM = "weather/status/sht15";
+const char dht22_topic[]              PROGMEM = "weather/status/dht22";
+const char bmp085_topic[]             PROGMEM = "weather/status/bmp085";
 
 PGM_P const status_topics[]           PROGMEM = { wifly_topic,      // idx = 0
                                                   sensor_topic,     // idx = 1
                                                   battery_topic,    // idx = 2
                                                   memory_topic,     // idx = 3
+                                                  sht15_topic,      // idx = 4
+                                                  dht22_topic,      // idx = 5
+                                                  bmp085_topic,     // idx = 6
                                                 };
+
+// MQTT status messages
+const char mqtt_connected[]           PROGMEM = "Connected";
+
+PGM_P const mqtt_status_messages[]   PROGMEM = { mqtt_connected,   // idx = 0
+                                               };
 
 // DHT22 status messages
 const char status_ok[]                PROGMEM = "DHT22: OK";
@@ -175,6 +189,13 @@ PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // 
 #define MEASUREMENT_INTERVAL    300000    // 5 minutes = 5 * 60 * 1000 miliiseconds
 //#define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
 #define AFTER_ERROR_DELAY       60000
+
+
+#if ENABLE_WIND_DIR_AVERAGING
+// Wind direction averaging
+byte WIND_DIR_AVERAGING_SIZE    = 10;
+unsigned long WIND_DIR_INTERVAL = 1000;
+#endif
 
 
 // constant conversion factors

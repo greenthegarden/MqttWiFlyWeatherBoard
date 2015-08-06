@@ -142,7 +142,8 @@ reboot
 char buf[12];
 
 // global variable definitions
-unsigned long previousMillis = 0;
+unsigned long previousMeasurementMillis = 0;
+unsigned long previousWindDirMillis = 0;
 boolean  pressure_sensor_status = false;
 #if ENABLE_WEATHER_METERS
 unsigned int windRPM     = 0;
@@ -181,6 +182,10 @@ float get_wind_direction();
 // interrupt routines (these are called by the hardware interrupts, not by the main code)
 void rainIRQ();
 float get_wind_direction();
+#if ENABLE_WIND_DIR_AVERAGING
+#include "RunningAverage.h"
+RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
+#endif
 #endif
 
 
@@ -246,7 +251,10 @@ PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
 byte dht22_measurement()
 {
   int chk = DHT.read22(DHT22_PIN);
- 
+
+  prog_buffer[0] = '\0';
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[5])));
+
   switch (chk)
   {
   case DHTLIB_OK:
@@ -254,27 +262,39 @@ byte dht22_measurement()
     break;
   case DHTLIB_ERROR_CHECKSUM:
  //   Serial.print("Checksum error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[1])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_TIMEOUT:
 //    Serial.print("Time out error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[2])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_CONNECT:
 //    Serial.print("Connect error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[3])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_ACK_L:
 //    Serial.print("Ack Low error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[4])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_ACK_H:
 //    Serial.print("Ack High error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[5])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   default:
 //    Serial.print("Unknown error,\t");
-    mqttClient.publish(prog_buffer,"DHT22: Checksum error");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[6])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   }
   return chk;
@@ -313,7 +333,9 @@ void publish_measurements()
 
       prog_buffer[0] = '\0';
       strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mqttClient.publish(prog_buffer, "Connected to broker");
+      mess_buffer[0] = '\0';
+      strcpy_P(mess_buffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
+      mqttClient.publish(prog_buffer,mess_buffer);
 
       takeMeasurement();
 
@@ -360,7 +382,9 @@ void setup()
 #endif
       prog_buffer[0] = '\0';
       strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mqttClient.publish(prog_buffer, "Connected to broker");
+      mess_buffer[0] = '\0';
+      strcpy_P(mess_buffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
+      mqttClient.publish(prog_buffer,mess_buffer);
     }
   }
 
@@ -382,21 +406,30 @@ void setup()
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
   prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
-  if (pressure_sensor.begin())         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-  {
+  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[6])));
+  if (pressure_sensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
     pressure_sensor_status = true;
-    if (mqttClient.connected())
-      mqttClient.publish(prog_buffer,"BMP085 init success");
+    if (mqttClient.connected()) {
+      mess_buffer[0] = '\0';
+      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[0])));
+      mqttClient.publish(prog_buffer, mess_buffer);
+    }
   }
-  else
-    if (mqttClient.connected())
-      mqttClient.publish(prog_buffer,"BMP085 init failure");
+  else {
+    if (mqttClient.connected()) {
+      mess_buffer[0] = '\0';
+      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[1])));
+      mqttClient.publish(prog_buffer, mess_buffer);
+    }
+  }
 #endif
 
 #if ENABLE_POWER_MONITOR
   ina3221.begin();
 #endif
+
+  if (mqttClient.connected())
+    mqttClient.disconnect();
 
 #if ENABLE_WEATHER_METERS
   pinMode(WSPEED,INPUT);               // input from wind meters windspeed sensor
@@ -410,6 +443,10 @@ void setup()
   windRPM         = 0;
   windintcount    = 0;
 
+#if ENABLE_WIND_DIR_AVERAGING
+  wind_dir_avg.clear(); // explicitly start clean
+#endif
+
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rainIRQ,   FALLING);
   attachInterrupt(1, wspeedIRQ, FALLING);
@@ -417,9 +454,6 @@ void setup()
   // turn on interrupts
   interrupts();
 #endif
-
-  if (mqttClient.connected())
-    mqttClient.disconnect();
 
 #if ENABLE_WDT
   wdt_enable(WDTO_8S); // Watchdog timer set for eight seconds
@@ -440,19 +474,25 @@ void loop()
 
   unsigned long currentMillis = millis();
 
-  if(currentMillis - previousMillis >= MEASUREMENT_INTERVAL)
-  {
-    previousMillis = currentMillis;
-
+  if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
+    previousMeasurementMillis = currentMillis;
     publish_measurements();
-    
 #if ENABLE_WEATHER_METERS
     windRPM_max = 0.0;    // reset to get strongest gust in each measurement period
 #endif
   }
 
-  if (wifly_failed_connections > wifly_failed_connections_max)
-  {
+
+#if ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING
+  if (currentMillis - previousWindDirMillis >= WIND_DIR_INTERVAL) {
+    previousWindDirMillis = currentMillis;
+    wind_dir_avg.addValue(get_wind_direction());
+  }
+#endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
+
+
+
+  if (wifly_failed_connections > wifly_failed_connections_max) {
     delay(AFTER_ERROR_DELAY);
     wifly_failed_connections = 0;
   }
@@ -462,18 +502,17 @@ void loop()
   static unsigned long windstopped = 0;
 
   // an interrupt occurred, handle it now
-  if (gotwspeed)
-  {
+  if (gotwspeed) {
     gotwspeed = false;
     windRPM = word(tempwindRPM);
-    if (windRPM > windRPM_max)
+    if (windRPM > windRPM_max) {
       windRPM_max = windRPM;
+    }
     windstopped = millis() + ZERODELAY;  // save this timestamp
   }
 
   // zero wind speed RPM if we don't get a reading in ZERODELAY ms
-  if (millis() > windstopped)
-  {
+  if (millis() > windstopped) {
     windRPM = 0;
     windintcount = 0;
   }
@@ -641,8 +680,7 @@ void BMP085_measurement()
       // if request is unsuccessful, 0 is returned
       status = pressure_sensor.startPressure(3);
 
-      if (status != 0)
-      {
+      if (status != 0) {
         // wait for the measurement to complete
         delay(status);
 
@@ -651,25 +689,40 @@ void BMP085_measurement()
         // (if temperature is stable, one temperature measurement can be used for a number of pressure measurements)
         // function returns 1 if successful, 0 if failure
         status = pressure_sensor.getPressure(&BMP085_pressure, &BMP085_temp); // mbar, deg C
-        if (status != 0 )
-        {
+        if (status != 0 ) {
           // publish BMP085 pressure measurement
           buf[0] = '\0';
           dtostrf(BMP085_pressure,1,FLOAT_DECIMAL_PLACES, buf);
 
           mqttClient.publish(prog_buffer, buf);
         }
-        else
-          mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_GET");
+        else {
+          mess_buffer[0] = '\0';
+          strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[2])));
+          mqttClient.publish(prog_buffer, mess_buffer);
+ //         mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_GET");
+        }
       }
-      else
-        mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_START");
+      else {
+        mess_buffer[0] = '\0';
+        strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[3])));
+        mqttClient.publish(prog_buffer, mess_buffer);
+//        mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_START");
+      }
     }
-    else
-      mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_GET");
+    else {
+      mess_buffer[0] = '\0';
+      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[4])));
+      mqttClient.publish(prog_buffer, mess_buffer);
+ //     mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_GET");
+    }
   }
-  else
-    mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_START");
+  else {
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[5])));
+    mqttClient.publish(prog_buffer, mess_buffer);
+//    mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_START");
+  }
 }
 #endif
 
@@ -715,15 +768,23 @@ void weather_meter_measurement()
   {
     prog_buffer[0] = '\0';
     strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
-    mqttClient.publish(prog_buffer,"Weather Meter ERROR");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(weather_meter_messages[0])));
+    mqttClient.publish(prog_buffer, mess_buffer);
+
+    //mqttClient.publish(prog_buffer,"Weather Meter ERROR");
   }
 }
 
 byte winddirection_measurement()
 {
-  // wind direction
-  float WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
-
+  float WM_wdirection = -1.0;
+#if ENABLE_WIND_DIR_AVERAGING
+  WM_wdirection = wind_dir_avg.getAverage();
+#else
+  // use instantaneous wind direction
+  WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
+#endif
   if (WM_wdirection >= 0)
   {
     buf[0] = '\0';
