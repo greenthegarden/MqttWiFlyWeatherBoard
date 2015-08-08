@@ -171,10 +171,6 @@ SFE_BMP085 pressure_sensor(BMP_ADDR);
 SDL_Arduino_INA3221 ina3221;
 #endif
 
-
-
-
-
 // function declarations
 void takeMeasurement();
 #if ENABLE_WEATHER_METERS
@@ -544,6 +540,14 @@ void takeMeasurement(void)
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[12])));
   mqttClient.publish(prog_buffer, "");
 
+#if ENABLE_DHT22
+  // take measurement as sensor cannot be be sampled at short intervals
+  if (dht22_measurement() == DHTLIB_OK) {
+    // value is stored in DHT object
+    dht22_measurement_ok = true;
+  }
+#endif
+
 #if ENABLE_TEMP
   temperature_measurement();
 #endif
@@ -573,13 +577,18 @@ void takeMeasurement(void)
 //  buf[0] = '\0';
 //  itoa(measurement_count, buf, 10);
 
- // publish measurement end topic
+  // publish measurement end topic
   prog_buffer[0] = '\0';
   strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[13])));
   mqttClient.publish(prog_buffer, "");
+
+#if ENABLE_DHT22
+  // reset measurements
+  dht22_measurement_ok = false;
+#endif
 }
 
-#if ENABLE_TEMP
+#if ENABLE_TEMP 
 void temperature_measurement()
 {
 #if ENABLE_SHT15
@@ -596,7 +605,7 @@ void temperature_measurement()
   mqttClient.publish(prog_buffer, buf);
 #endif
 #if ENABLE_DHT22
-  if (dht22_measurement() == DHTLIB_OK) {
+  if (dht22_measurement_ok) {
     // value is stored in DHT object
     buf[0] = '\0';
     dtostrf(DHT.temperature,1,FLOAT_DECIMAL_PLACES, buf);
@@ -625,7 +634,7 @@ void humidity_measurement()
   mqttClient.publish(prog_buffer, buf);
 #endif
 #if ENABLE_DHT22
-  if (dht22_measurement() == DHTLIB_OK) {
+  if (dht22_measurement_ok) {
     // value is stored in DHT object
     buf[0] = '\0';
     dtostrf(DHT.humidity,1,FLOAT_DECIMAL_PLACES, buf);

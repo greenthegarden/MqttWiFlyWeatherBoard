@@ -211,6 +211,11 @@ const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result
 #endif
 
 
+#if ENABLE_DHT22
+byte dht22_measurement_ok = false;
+#endif
+
+
 // Weather Board Digital I/O pin definitions
 
 #define   RAIN         2
@@ -220,7 +225,7 @@ const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result
 #define   RF_RTS       6
 #define   EOC          8
 #define   XCLR         9
-#define   DHT22_PIN    10
+#define   DHT22_PIN    11
 // (the following three are predefined)
 // #define MOSI        11
 // #define MISO        12
