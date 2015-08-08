@@ -739,7 +739,11 @@ void BMP085_measurement()
 void TEMT6000_measurement()
 {
   // get light level
+#if ENABLE_EXTERNAL_LIGHT
+  int TEMT6000_light_raw = analogRead(LIGHT);
+#else
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
+#endif
 
   buf[0] = '\0';
   itoa(TEMT6000_light_raw, buf, 10);
