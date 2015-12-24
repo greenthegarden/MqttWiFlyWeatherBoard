@@ -680,8 +680,9 @@ void BMP085_measurement()
 
       mqttClient.publish(prog_buffer, buf);
 
+      // prepare topic for pressure measurement
       prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[4])));
+      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[5])));
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
@@ -740,8 +741,10 @@ void TEMT6000_measurement()
 {
   // get light level
 #if ENABLE_EXTERNAL_LIGHT
+  // higher reading corresponds to brighter conditions
   int TEMT6000_light_raw = analogRead(LIGHT);
 #else
+  // lower reading corresponds to brighter conditions
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
 #endif
 
