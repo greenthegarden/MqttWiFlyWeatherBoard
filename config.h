@@ -81,29 +81,13 @@ PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,     // idx = 0
                                                   BMP085_STATUS,    // idx = 6
                                                 };
 
-// MQTT status messages
-const char MQTT_CONNECTION[]          PROGMEM = "Connected";
+// MQTT payloads
+const char MQTT_PAYLOAD_CONNECTED[]          PROGMEM = "Connected";
+const char MQTT_PAYLOAD_WM_ERROR[]           PROGMEM = "Weather Meter ERROR";
 
-PGM_P const mqtt_status_messages[]    PROGMEM = { MQTT_CONNECTION,   // idx = 0
+PGM_P const MQTT_PAYLOADS[]    PROGMEM = { MQTT_PAYLOAD_CONNECTED,   // idx = 0
+                                           MQTT_PAYLOAD_WM_ERROR,    // idx = 1
                                                };
-
-// DHT22 status messages
-const char DHT22_STATUS_OK[]          PROGMEM = "DHT22: OK";
-const char dht22_CHECKSUM_ERROR[]     PROGMEM = "DHT22: Checksum error";
-const char DHT22_TIMEOUT_ERROR[]      PROGMEM = "DHT22: Time out error";
-const char DHT22_CONNECT_ERROR[]      PROGMEM = "DHT22: Connect error";
-const char DHT22_ACK_LOW_ERROR[]      PROGMEM = "DHT22: Ack Low error";
-const char DHT22_ACK_HIGH_ERROR[]     PROGMEM = "DHT22: Ack High error";
-const char DHT22_UNKNOWN_ERROR[]      PROGMEM = "DHT22: Unknown error";
-
-PGM_P const DHT22_STATUS_MESSAGES[]   PROGMEM = { DHT22_STATUS_OK,       // idx = 0
-                                                  dht22_CHECKSUM_ERROR,  // idx = 1
-                                                  DHT22_TIMEOUT_ERROR,   // idx = 2
-                                                  DHT22_CONNECT_ERROR,   // idx = 3
-                                                  DHT22_ACK_LOW_ERROR,   // idx = 4
-                                                  DHT22_ACK_HIGH_ERROR,  // idx = 5
-                                                  DHT22_UNKNOWN_ERROR,   // idx = 6
-                                                };
 
 // BMP085 status messages
 
@@ -122,62 +106,59 @@ PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,      
                                                       BMP085_ERROR_TEMP_GET,        // idx = 5
                                                     };
 
-// Weather meter messages Weather Meter ERROR
-const char not_connected[]            PROGMEM = "Weather Meter ERROR";
-
-PGM_P const weather_meter_messages[]  PROGMEM = { not_connected,    // idx = 0
-                                                };
                                                 
 // sunairplus measurement topics 
 
 #if ENABLE_POWER_MONITOR
-const char battery_voltage_topic[]    PROGMEM = "weather/sunairplus/battery_voltage";
-const char battery_current_topic[]    PROGMEM = "weather/sunairplus/battery_current";
-const char solar_voltage_topic[]      PROGMEM = "weather/sunairplus/solar_voltage";
-const char solar_current_topic[]      PROGMEM = "weather/sunairplus/solar_current";
-const char output_voltage_topic[]     PROGMEM = "weather/sunairplus/output_voltage";
-const char output_current_topic[]     PROGMEM = "weather/sunairplus/output_current";
+const char BATTERY_VOLTAGE_TOPIC[]    PROGMEM = "weather/sunairplus/battery_voltage";
+const char BATTERY_CURRENT_TOPIC[]    PROGMEM = "weather/sunairplus/battery_current";
+const char SOLAR_VOLTAGE_TOPIC[]      PROGMEM = "weather/sunairplus/solar_voltage";
+const char SOLAR_CURRENT_TOPIC[]      PROGMEM = "weather/sunairplus/solar_current";
+const char OUTPUT_VOLTAGE_TOPIC[]     PROGMEM = "weather/sunairplus/output_voltage";
+const char OUTPUT_CURRENT_TOPIC[]     PROGMEM = "weather/sunairplus/output_current";
 
 //tables to refer to strings
-PGM_P const sunairplus_topics[]       PROGMEM = { battery_voltage_topic,     // idx = 0
-                                                  battery_current_topic,     // idx = 1
-                                                  solar_voltage_topic,       // idx = 2
-                                                  solar_current_topic,       // idx = 3
-                                                  output_voltage_topic,      // idx = 4
-                                                  output_current_topic,      // idx = 5
+PGM_P const SUNAIRPLUS_TOPICS[]       PROGMEM = { BATTERY_VOLTAGE_TOPIC,     // idx = 0
+                                                  BATTERY_CURRENT_TOPIC,     // idx = 1
+                                                  SOLAR_VOLTAGE_TOPIC,       // idx = 2
+                                                  SOLAR_CURRENT_TOPIC,       // idx = 3
+                                                  OUTPUT_VOLTAGE_TOPIC,      // idx = 4
+                                                  OUTPUT_CURRENT_TOPIC,      // idx = 5
                                                 };
 #endif
 
 // measurement topics
 
+const char SHT15_TEMP_TOPIC[]         PROGMEM = "weather/measurement/SHT15_temp";
+const char SHT15_HUMIDITY_TOPIC[]     PROGMEM = "weather/measurement/SHT15_humidity";
+const char BMP085_TEMP_TOPIC[]        PROGMEM = "weather/measurement/BMP085_temp";
+const char BMP085_PRESSURE_TOPIC[]    PROGMEM = "weather/measurement/BMP085_pressure";
+const char TEMT6000_LIGHT_RAW_TOPIC[] PROGMEM = "weather/measurement/TEMT6000_light_raw";
+const char TEMT6000_LIGHT_TOPIC[]     PROGMEM = "weather/measurement/TEMT6000_light";
+const char WIND_SPEED_TOPIC[]         PROGMEM = "weather/measurement/wind_spd";
+const char WIND_SPEED_MAX_TOPIC[]     PROGMEM = "weather/measurement/wind_spd_max";
+const char WIND_DIRECTION_TOPIC[]     PROGMEM = "weather/measurement/wind_dir";
+const char RAINFALL_TOPIC[]           PROGMEM = "weather/measurement/rain";
+
+const char DHT22_TEMP_TOPIC[]         PROGMEM = "weather/measurement/DHT22_temp";
+const char DHT22_HUMIDITY_TOPIC[]     PROGMEM = "weather/measurement/DHT22_humidity";
+
 const char MEASUREMENTS_START[]       PROGMEM = "weather/measurement/START";
 const char MEASUREMENTS_END[]         PROGMEM = "weather/measurement/END";
-const char SHT15_temp_topic[]         PROGMEM = "weather/measurement/SHT15_temp";
-const char DHT22_temp_topic[]         PROGMEM = "weather/measurement/DHT22_temp";
-const char SHT15_humidity_topic[]     PROGMEM = "weather/measurement/SHT15_humidity";
-const char DHT22_humidity_topic[]     PROGMEM = "weather/measurement/DHT22_humidity";
-const char BMP085_temp_topic[]        PROGMEM = "weather/measurement/BMP085_temp";
-const char BMP085_pressure_topic[]    PROGMEM = "weather/measurement/BMP085_pressure";
-const char TEMT6000_light_raw_topic[] PROGMEM = "weather/measurement/TEMT6000_light_raw";
-const char TEMT6000_light_topic[]     PROGMEM = "weather/measurement/TEMT6000_light";
-const char wind_spd_topic[]           PROGMEM = "weather/measurement/wind_spd";
-const char wind_spd_max_topic[]       PROGMEM = "weather/measurement/wind_spd_max";
-const char wind_dir_topic[]           PROGMEM = "weather/measurement/wind_dir";
-const char rainfall_topic[]           PROGMEM = "weather/measurement/rain";
 
 //tables to refer to strings
-PGM_P const measurment_topics[]       PROGMEM = { SHT15_temp_topic,          // idx = 0
-                                                  DHT22_temp_topic,          // idx = 1
-                                                  SHT15_humidity_topic,      // idx = 2
-                                                  DHT22_humidity_topic,      // idx = 3
-                                                  BMP085_temp_topic,         // idx = 4
-                                                  BMP085_pressure_topic,     // idx = 5
-                                                  TEMT6000_light_raw_topic,  // idx = 6
-                                                  TEMT6000_light_topic,      // idx = 7
-                                                  wind_dir_topic,            // idx = 8
-                                                  wind_spd_topic,            // idx = 9
-                                                  wind_spd_max_topic,        // idx = 10
-                                                  rainfall_topic,            // idx = 11
+PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,          // idx = 0
+                                                  SHT15_HUMIDITY_TOPIC,          // idx = 1
+                                                  BMP085_TEMP_TOPIC,      // idx = 2
+                                                  BMP085_PRESSURE_TOPIC,      // idx = 3
+                                                  TEMT6000_LIGHT_RAW_TOPIC,         // idx = 4
+                                                  TEMT6000_LIGHT_TOPIC,     // idx = 5
+                                                  WIND_SPEED_TOPIC,  // idx = 6
+                                                  WIND_SPEED_MAX_TOPIC,      // idx = 7
+                                                  WIND_DIRECTION_TOPIC,            // idx = 8
+                                                  RAINFALL_TOPIC,            // idx = 9
+                                                  DHT22_TEMP_TOPIC,        // idx = 10
+                                                  DHT22_HUMIDITY_TOPIC,            // idx = 11
                                                   MEASUREMENTS_START,        // idx = 12
                                                   MEASUREMENTS_END,          // idx = 13
                                                 };
@@ -212,7 +193,7 @@ const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result
 
 
 #if ENABLE_DHT22
-byte dht22_measurement_ok = false;
+byte dht22MeasurementOk = false;
 #endif
 
 

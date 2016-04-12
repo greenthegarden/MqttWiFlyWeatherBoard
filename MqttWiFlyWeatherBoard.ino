@@ -131,7 +131,7 @@ reboot
 #include <SHT1x.h>              // SHT15 humidity sensor library
 #endif
 #if ENABLE_DHT22
-#include <dht.h>                // DHT22 temperature/humidty sensor library
+#include <DHT22Config.h>       // DHT22 temperature/humidty sensor library
 #endif
 #if ENABLE_BMP085
 #include <Wire.h>               // I2C library (necessary for pressure sensor)
@@ -161,15 +161,12 @@ volatile unsigned long rainTime         = 0, rainLast = 0, rainInterval = 0, rai
 #endif
 
 
-// initialisation of sensor objects
+// initialisation of remaining sensor objects
 #if ENABLE_SHT15
-SHT1x humidity_sensor(SHT1x_DATA, SHT1x_CLOCK);
-#endif
-#if ENABLE_DHT22
-dht DHT;
+SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
 #endif
 #if ENABLE_BMP085
-SFE_BMP085 pressure_sensor(BMP_ADDR);
+SFE_BMP085 pressureSensor(BMP_ADDR);
 #endif
 #if ENABLE_POWER_MONITOR
 SDL_Arduino_INA3221 ina3221;
@@ -247,7 +244,7 @@ PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, wiflyClient);
 // dht22 measurement routine
 byte dht22_measurement()
 {
-  int chk = DHT.read22(DHT22_PIN);
+  byte chk = dht22_reading(DHT22_PIN);
 
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
@@ -256,43 +253,43 @@ byte dht22_measurement()
     case DHTLIB_OK :
       DEBUG_LOG(1, "OK");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[0])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[0])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     case DHTLIB_ERROR_CHECKSUM :
       DEBUG_LOG(1, "Checksum error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[1])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[1])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     case DHTLIB_ERROR_TIMEOUT :
       DEBUG_LOG(1, "Time out error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[2])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[2])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     case DHTLIB_ERROR_CONNECT :
       DEBUG_LOG(1, "Connect error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[3])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[3])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     case DHTLIB_ERROR_ACK_L :
       DEBUG_LOG(1, "Ack Low error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[4])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[4])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     case DHTLIB_ERROR_ACK_H :
       DEBUG_LOG(1, "Ack High error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[5])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[5])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
     default :
       DEBUG_LOG(1, "Unknown error");
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[6])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[6])));
       mqttClient.publish(progBuffer,messBuffer);
       break;
   }
@@ -331,7 +328,7 @@ void publish_measurements()
       progBuffer[0] = '\0';
       strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
       mqttClient.publish(progBuffer,messBuffer);
 
       takeMeasurement();
@@ -395,24 +392,24 @@ void setup()
   // Reset the humidity sensor connection so that the I2C bus can be accessed
   TWCR &= ~(_BV(TWEN));                // turn off I2C enable bit so we can access the SHT15 humidity sensor
   digitalWrite(XCLR, LOW);              // disable the BMP085 while resetting humidity sensor
-  humidity_sensor.connectionReset();   // reset the humidity sensor connection
+  humiditySensor.connectionReset();   // reset the humidity sensor connection
   TWCR |= _BV(TWEN);                   // turn on I2C enable bit so we can access the BMP085 pressure sensor
   digitalWrite(XCLR, HIGH);             // enable BMP085
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
-  if (pressure_sensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
+  if (pressureSensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
     pressureSensorStatus = true;
     if (mqttClient.connected()) {
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[0])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
     if (mqttClient.connected()) {
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[1])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   }
@@ -535,14 +532,14 @@ void takeMeasurement(void)
 
   // publish measurement start topic
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[12])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
   mqttClient.publish(progBuffer, "");
 
 #if ENABLE_DHT22
   // take measurement as sensor cannot be be sampled at short intervals
   if (dht22_measurement() == DHTLIB_OK) {
     // value is stored in DHT object
-    dht22_measurement_ok = true;
+    dht22MeasurementOk = true;
   }
 #endif
 
@@ -554,7 +551,7 @@ void takeMeasurement(void)
 #endif
 #if ENABLE_PRESSURE
   if ( pressureSensorStatus )
-    BMP085_measurement();
+    bmp085_measurement();
 #endif
 #if ENABLE_LIGHT
   TEMT6000_measurement();
@@ -577,12 +574,12 @@ void takeMeasurement(void)
 
   // publish measurement end topic
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[13])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[13])));
   mqttClient.publish(progBuffer, "");
 
 #if ENABLE_DHT22
   // reset measurements
-  dht22_measurement_ok = false;
+  dht22MeasurementOk = false;
 #endif
 }
 
@@ -591,20 +588,20 @@ void temperature_measurement()
 {
 #if ENABLE_SHT15
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  float SHT15_temp = humidity_sensor.readTemperatureC();  // temperature returned in degrees Celcius
+  float measurement = humiditySensor.readTemperatureC();  // temperature returned in degrees Celcius
   buf[0] = '\0';
-  dtostrf(SHT15_temp,1,FLOAT_DECIMAL_PLACES, buf);
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[0])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[0])));
   mqttClient.publish(progBuffer, buf);
 #endif
 #if ENABLE_DHT22
-  if (dht22_measurement_ok) {
+  if (dht22MeasurementOk) {
     // value is stored in DHT object
     buf[0] = '\0';
-    dtostrf(DHT.temperature,1,FLOAT_DECIMAL_PLACES, buf);
+    dtostrf(dht.temperature,1,FLOAT_DECIMAL_PLACES, buf);
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[1])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[1])));
     mqttClient.publish(progBuffer, buf);
   }
 #endif
@@ -616,20 +613,20 @@ void humidity_measurement()
 {
 #if ENABLE_SHT15
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  float SHT15_humidity = humidity_sensor.readHumidity();
+  float measurement = humiditySensor.readHumidity();
   buf[0] = '\0';
-  dtostrf(SHT15_humidity,1,FLOAT_DECIMAL_PLACES, buf);
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[2])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
   mqttClient.publish(progBuffer, buf);
 #endif
 #if ENABLE_DHT22
-  if (dht22_measurement_ok) {
+  if (dht22MeasurementOk) {
     // value is stored in DHT object
     buf[0] = '\0';
-    dtostrf(DHT.humidity,1,FLOAT_DECIMAL_PLACES, buf);
+    dtostrf(dht.humidity,1,FLOAT_DECIMAL_PLACES, buf);
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[3])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[3])));
     mqttClient.publish(progBuffer, buf);
   }
 #endif
@@ -637,47 +634,46 @@ void humidity_measurement()
 #endif
 
 #if ENABLE_PRESSURE
-void BMP085_measurement()
+void bmp085_measurement()
 {
   TWCR |= _BV(TWEN);          // turn on I2C enable bit so we can access the BMP085 pressure sensor
 
   char   status;
-  double BMP085_temp     = 0.0;
-  double BMP085_pressure = 0.0;
+  double bmp085Temp     = 0.0;
+  double bmp085Pressure = 0.0;
 
   // start BMP085 temperature reading
   // tell the sensor to start a temperature measurement
   // if request is successful, the number of ms to wait is returned
   // if request is unsuccessful, 0 is returned
-  status = pressure_sensor.startTemperature();
+  status = pressureSensor.startTemperature();
   if (status != 0)
   {
     // wait for the measurement to complete
     delay(status);
 
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[4])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
 
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
-    status = pressure_sensor.getTemperature(&BMP085_temp); // temperature returned in degrees Celcius
+    status = pressureSensor.getTemperature(&bmp085Temp); // temperature returned in degrees Celcius
 
     if (status != 0) {
       // publish BMP085 temperature measurement
       buf[0] = '\0';
-      dtostrf(BMP085_temp,1,FLOAT_DECIMAL_PLACES, buf);
-
+      dtostrf(bmp085Temp,1,FLOAT_DECIMAL_PLACES, buf);
       mqttClient.publish(progBuffer, buf);
 
       // prepare topic for pressure measurement
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[5])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
       // if request is successful, the number of ms to wait is returned
       // if request is unsuccessful, 0 is returned
-      status = pressure_sensor.startPressure(3);
+      status = pressureSensor.startPressure(3);
 
       if (status != 0) {
         // wait for the measurement to complete
@@ -687,31 +683,30 @@ void BMP085_measurement()
         // note that the function requires the previous temperature measurement (T)
         // (if temperature is stable, one temperature measurement can be used for a number of pressure measurements)
         // function returns 1 if successful, 0 if failure
-        status = pressure_sensor.getPressure(&BMP085_pressure, &BMP085_temp); // mbar, deg C
+        status = pressureSensor.getPressure(&bmp085Pressure, &bmp085Temp); // mbar, deg C
         if (status != 0 ) {
           // publish BMP085 pressure measurement
           buf[0] = '\0';
-          dtostrf(BMP085_pressure,1,FLOAT_DECIMAL_PLACES, buf);
-
+          dtostrf(bmp085Pressure,1,FLOAT_DECIMAL_PLACES, buf);
           mqttClient.publish(progBuffer, buf);
         } else {
           messBuffer[0] = '\0';
-          strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[2])));
+          strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
           mqttClient.publish(progBuffer, messBuffer);
         }
       } else {
         messBuffer[0] = '\0';
-        strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[3])));
+        strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
         mqttClient.publish(progBuffer, messBuffer);
       }
     } else {
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[4])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
     messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[5])));
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
     mqttClient.publish(progBuffer, messBuffer);
   }
 }
@@ -733,7 +728,7 @@ void TEMT6000_measurement()
   itoa(TEMT6000_light_raw, buf, 10);
 
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[6])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
 
   mqttClient.publish(progBuffer, buf);
 
@@ -745,7 +740,7 @@ void TEMT6000_measurement()
   itoa(TEMT6000_light, buf, 10);
 
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[7])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
 
   mqttClient.publish(progBuffer, buf);
 }
@@ -763,7 +758,7 @@ void weather_meter_measurement()
     progBuffer[0] = '\0';
     strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
     messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(weather_meter_messages[0])));
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
     mqttClient.publish(progBuffer, messBuffer);
   }
 }
@@ -781,7 +776,7 @@ byte winddirection_measurement()
     buf[0] = '\0';
     dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[8])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[8])));
     mqttClient.publish(progBuffer, buf);
     return 1;
   } else {
@@ -798,7 +793,7 @@ void windspeed_measurement()
   buf[0] = '\0';
   dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[9])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[9])));
   mqttClient.publish(progBuffer, buf);
 
   // publish maximum wind speed since last report
@@ -806,7 +801,7 @@ void windspeed_measurement()
   buf[0] = '\0';
   dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[10])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
   mqttClient.publish(progBuffer, buf);
 }
 
@@ -818,7 +813,7 @@ void rainfall_measurement()
   buf[0] = '\0';
   dtostrf(rainfallMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[11])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
   mqttClient.publish(progBuffer, buf);
 
   // reset value of rain to zero
@@ -837,14 +832,14 @@ void sunairplus_measurement()
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[0])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[0])));
   mqttClient.publish(progBuffer, buf);
   
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[1])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[1])));
   mqttClient.publish(progBuffer, buf);
 
   // Solar cell measurements
@@ -853,14 +848,14 @@ void sunairplus_measurement()
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[2])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[2])));
   mqttClient.publish(progBuffer, buf);
 
   measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[3])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[3])));
   mqttClient.publish(progBuffer, buf);
 
   // SunAirPlus output measurements
@@ -869,14 +864,14 @@ void sunairplus_measurement()
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[4])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[4])));
   mqttClient.publish(progBuffer, buf);
 
   measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[5])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[5])));
   mqttClient.publish(progBuffer, buf);
 }
 #endif
