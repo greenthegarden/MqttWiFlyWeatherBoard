@@ -96,6 +96,135 @@ void weatherboard_sensors_initialisaton()
   }
 }
 
+void publish_sht15_measurements()
+{
+  TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
+  
+  float measurement = 0.0;
+  
+  // publish temperature
+  measurement = humiditySensor.readTemperatureC();  // temperature returned in degrees Celcius
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[0])));
+  mqttClient.publish(progBuffer, buf);
+
+  // publish humidity
+  measurement = humiditySensor.readHumidity();
+  buf[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
+  mqttClient.publish(progBuffer, buf);
+}
+
+void publish_bmp085_measurements()
+{
+  TWCR |= _BV(TWEN);          // turn on I2C enable bit so we can access the BMP085 pressure sensor
+
+  char   status;
+  double bmp085Temp     = 0.0;
+  double bmp085Pressure = 0.0;
+
+  // start BMP085 temperature reading
+  // tell the sensor to start a temperature measurement
+  // if request is successful, the number of ms to wait is returned
+  // if request is unsuccessful, 0 is returned
+  status = pressureSensor.startTemperature();
+  if (status != 0)
+  {
+    // wait for the measurement to complete
+    delay(status);
+
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
+
+    // retrieve BMP085 temperature reading
+    // function returns 1 if successful, 0 if failure
+    status = pressureSensor.getTemperature(&bmp085Temp); // temperature returned in degrees Celcius
+
+    if (status != 0) {
+      // publish BMP085 temperature measurement
+      buf[0] = '\0';
+      dtostrf(bmp085Temp,1,FLOAT_DECIMAL_PLACES, buf);
+      mqttClient.publish(progBuffer, buf);
+
+      // prepare topic for pressure measurement
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
+
+      // tell the sensor to start a pressure measurement
+      // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
+      // if request is successful, the number of ms to wait is returned
+      // if request is unsuccessful, 0 is returned
+      status = pressureSensor.startPressure(3);
+
+      if (status != 0) {
+        // wait for the measurement to complete
+        delay(status);
+
+        // retrieve the BMP085 pressure reading
+        // note that the function requires the previous temperature measurement (T)
+        // (if temperature is stable, one temperature measurement can be used for a number of pressure measurements)
+        // function returns 1 if successful, 0 if failure
+        status = pressureSensor.getPressure(&bmp085Pressure, &bmp085Temp); // mbar, deg C
+        if (status != 0 ) {
+          // publish BMP085 pressure measurement
+          buf[0] = '\0';
+          dtostrf(bmp085Pressure,1,FLOAT_DECIMAL_PLACES, buf);
+          mqttClient.publish(progBuffer, buf);
+        } else {
+          messBuffer[0] = '\0';
+          strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
+          mqttClient.publish(progBuffer, messBuffer);
+        }
+      } else {
+        messBuffer[0] = '\0';
+        strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
+        mqttClient.publish(progBuffer, messBuffer);
+      }
+    } else {
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
+      mqttClient.publish(progBuffer, messBuffer);
+    }
+  } else {
+    messBuffer[0] = '\0';
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
+    mqttClient.publish(progBuffer, messBuffer);
+  }
+}
+
+void publish_temt6000_measurement()
+{
+  // get light level
+#if ENABLE_EXTERNAL_LIGHT
+  // higher reading corresponds to brighter conditions
+  int TEMT6000_light_raw = analogRead(LIGHT);
+#else
+  // lower reading corresponds to brighter conditions
+  int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
+#endif
+
+  buf[0] = '\0';
+  itoa(TEMT6000_light_raw, buf, 10);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
+  mqttClient.publish(progBuffer, buf);
+
+  // convert TEMT6000_light_raw voltage value to percentage
+  //map(value, fromLow, fromHigh, toLow, toHigh)
+  int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
+
+  buf[0] = '\0';
+  itoa(TEMT6000_light, buf, 10);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
+  mqttClient.publish(progBuffer, buf);
+}
+
+
 
 
 #if ENABLE_WEATHER_METERS
@@ -229,7 +358,7 @@ float get_wind_direction()
  270  º 98.6  k 3.15  V 978 counts  >967
  */
 
-byte wind_direction_measurement()
+byte publish_wind_direction_measurement()
 {
   float WM_wdirection = -1.0;
 #if ENABLE_WIND_DIR_AVERAGING
@@ -250,7 +379,7 @@ byte wind_direction_measurement()
   }
 }
 
-void windspeed_measurement()
+void publish_windspeed_measurement()
 {
   float windSpeedMeasurement = 0.0;
 
@@ -271,7 +400,7 @@ void windspeed_measurement()
   mqttClient.publish(progBuffer, buf);
 }
 
-void rainfall_measurement()
+void publish_rainfall_measurement()
 {
   // rainfall unit conversion
   float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
@@ -286,13 +415,13 @@ void rainfall_measurement()
   rain = 0;
 }
 
-void weather_meter_measurement()
+void publish_weather_meter_measurement()
 {
   // take wind-direction measurement first
   // if returns -1 then treat as sensors not connected
-  if (wind_direction_measurement()) {
-    windspeed_measurement();
-    rainfall_measurement();
+  if (publish_wind_direction_measurement()) {
+    publish_windspeed_measurement();
+    publish_rainfall_measurement();
   } else {
     progBuffer[0] = '\0';
     strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));

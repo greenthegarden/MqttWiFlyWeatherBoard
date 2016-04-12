@@ -55,42 +55,27 @@
 
 #include "config.h"
 
-void take_measurements(void)
+void publish_measurements(void)
 {
   // publish measurement start topic
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
   mqttClient.publish(progBuffer, "");
 
-#if ENABLE_DHT22
-  // take measurement as sensor cannot be be sampled at short intervals
-  if (dht22_measurement() == DHTLIB_OK) {
-    // value is stored in DHT object
-    dht22MeasurementOk = true;
-  }
-#endif
-
-#if ENABLE_TEMP
-  temperature_measurement();
-#endif
-#if ENABLE_HUMIDITY
-  humidity_measurement();
-#endif
-#if ENABLE_PRESSURE
-  if ( pressureSensorStatus )
-    bmp085_measurement();
-#endif
-#if ENABLE_LIGHT
-  TEMT6000_measurement();
-#endif
-#if ENABLE_POWER_MONITOR
-  sunairplus_measurement();
-#endif
+  publish_sht15_measurements();
+  if (pressureSensorStatus) { publish_bmp085_measurements(); }
+  publish_temt6000_measurement();
 #if ENABLE_WEATHER_METERS
 //  windspeed_measurement();
 //  winddirection_measurement();
 //  rainfall_measurement();
-  weather_meter_measurement();
+  publish_weather_meter_measurement();
+#endif
+#if ENABLE_DHT22
+  if (dht22_measurement() == DHTLIB_OK) { publish_dht22_measurements(); }
+#endif
+#if ENABLE_POWER_MONITOR
+  publish_sunairplus_measurement();
 #endif
 
   // publish measurement end topic with message
@@ -103,177 +88,10 @@ void take_measurements(void)
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[13])));
   mqttClient.publish(progBuffer, "");
-
-#if ENABLE_DHT22
-  // reset measurements
-  dht22MeasurementOk = false;
-#endif
 }
 
-#if ENABLE_TEMP 
-void temperature_measurement()
-{
-#if ENABLE_SHT15
-  TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  float measurement = humiditySensor.readTemperatureC();  // temperature returned in degrees Celcius
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[0])));
-  mqttClient.publish(progBuffer, buf);
-#endif
-#if ENABLE_DHT22
-  if (dht22MeasurementOk) {
-    // value is stored in DHT object
-    buf[0] = '\0';
-    dtostrf(dht.temperature,1,FLOAT_DECIMAL_PLACES, buf);
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[1])));
-    mqttClient.publish(progBuffer, buf);
-  }
-#endif
-}
-#endif
 
-#if ENABLE_HUMIDITY
-void humidity_measurement()
-{
-#if ENABLE_SHT15
-  TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  float measurement = humiditySensor.readHumidity();
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
-  mqttClient.publish(progBuffer, buf);
-#endif
-#if ENABLE_DHT22
-  if (dht22MeasurementOk) {
-    // value is stored in DHT object
-    buf[0] = '\0';
-    dtostrf(dht.humidity,1,FLOAT_DECIMAL_PLACES, buf);
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[3])));
-    mqttClient.publish(progBuffer, buf);
-  }
-#endif
-}
-#endif
-
-#if ENABLE_PRESSURE
-void bmp085_measurement()
-{
-  TWCR |= _BV(TWEN);          // turn on I2C enable bit so we can access the BMP085 pressure sensor
-
-  char   status;
-  double bmp085Temp     = 0.0;
-  double bmp085Pressure = 0.0;
-
-  // start BMP085 temperature reading
-  // tell the sensor to start a temperature measurement
-  // if request is successful, the number of ms to wait is returned
-  // if request is unsuccessful, 0 is returned
-  status = pressureSensor.startTemperature();
-  if (status != 0)
-  {
-    // wait for the measurement to complete
-    delay(status);
-
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
-
-    // retrieve BMP085 temperature reading
-    // function returns 1 if successful, 0 if failure
-    status = pressureSensor.getTemperature(&bmp085Temp); // temperature returned in degrees Celcius
-
-    if (status != 0) {
-      // publish BMP085 temperature measurement
-      buf[0] = '\0';
-      dtostrf(bmp085Temp,1,FLOAT_DECIMAL_PLACES, buf);
-      mqttClient.publish(progBuffer, buf);
-
-      // prepare topic for pressure measurement
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
-
-      // tell the sensor to start a pressure measurement
-      // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
-      // if request is successful, the number of ms to wait is returned
-      // if request is unsuccessful, 0 is returned
-      status = pressureSensor.startPressure(3);
-
-      if (status != 0) {
-        // wait for the measurement to complete
-        delay(status);
-
-        // retrieve the BMP085 pressure reading
-        // note that the function requires the previous temperature measurement (T)
-        // (if temperature is stable, one temperature measurement can be used for a number of pressure measurements)
-        // function returns 1 if successful, 0 if failure
-        status = pressureSensor.getPressure(&bmp085Pressure, &bmp085Temp); // mbar, deg C
-        if (status != 0 ) {
-          // publish BMP085 pressure measurement
-          buf[0] = '\0';
-          dtostrf(bmp085Pressure,1,FLOAT_DECIMAL_PLACES, buf);
-          mqttClient.publish(progBuffer, buf);
-        } else {
-          messBuffer[0] = '\0';
-          strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
-          mqttClient.publish(progBuffer, messBuffer);
-        }
-      } else {
-        messBuffer[0] = '\0';
-        strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
-        mqttClient.publish(progBuffer, messBuffer);
-      }
-    } else {
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
-      mqttClient.publish(progBuffer, messBuffer);
-    }
-  } else {
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
-    mqttClient.publish(progBuffer, messBuffer);
-  }
-}
-#endif
-
-#if ENABLE_LIGHT
-void TEMT6000_measurement()
-{
-  // get light level
-#if ENABLE_EXTERNAL_LIGHT
-  // higher reading corresponds to brighter conditions
-  int TEMT6000_light_raw = analogRead(LIGHT);
-#else
-  // lower reading corresponds to brighter conditions
-  int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
-#endif
-
-  buf[0] = '\0';
-  itoa(TEMT6000_light_raw, buf, 10);
-
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
-
-  mqttClient.publish(progBuffer, buf);
-
-  // convert TEMT6000_light_raw voltage value to percentage
-  //map(value, fromLow, fromHigh, toLow, toHigh)
-  int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
-
-  buf[0] = '\0';
-  itoa(TEMT6000_light, buf, 10);
-
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
-
-  mqttClient.publish(progBuffer, buf);
-}
-#endif
-
-void publish_measurements()
+void publish_report()
 {
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
@@ -297,7 +115,7 @@ void publish_measurements()
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
       mqttClient.publish(progBuffer,messBuffer);
 
-      take_measurements();
+      publish_measurements();
 
       mqttClient.disconnect();
     }
@@ -349,12 +167,12 @@ void setup()
   ina3221.begin();
 #endif
 
-  if (mqttClient.connected())
-    mqttClient.disconnect();
-
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_initialisation();
 #endif
+
+  if (mqttClient.connected())
+    mqttClient.disconnect();
 }
 
 
@@ -369,7 +187,7 @@ void loop()
 
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
-    publish_measurements();
+    publish_report();
 #if ENABLE_WEATHER_METERS
     windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
 #endif

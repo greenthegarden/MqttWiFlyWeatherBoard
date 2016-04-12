@@ -86,5 +86,14 @@ byte dht22_measurement()
   return chk;
 }
 
+void publish_dht22_measurements()
+{
+  if (dht22_measurement()) {
+    publish_dht22_temperature_measurement();
+    publish_dht22_humidity_measurement();
+  }
+}
+
+
 #endif  /* MQTTWIFLYWEATHERBOARD_MQTTCONFIG_H_ */
 

@@ -20,6 +20,7 @@ char buf[12];
 const int BAUD_RATE           = 9600;
 
 
+
 // program constants
 
 const unsigned long MEASUREMENT_INTERVAL  =  5UL * 60UL * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
@@ -32,37 +33,26 @@ const unsigned long AFTER_ERROR_DELAY      = 60UL * 1000UL;
 
 
 // Define use of weather board sensors
-#define ENABLE_EXTERNAL_LIGHT   true
-#define ENABLE_WEATHER_METERS   true
+#define ENABLE_WEATHER_METERS     true
 #define ENABLE_WIND_DIR_AVERAGING true
+#define ENABLE_EXTERNAL_LIGHT     true
 
 #include "weatherBoardConfig.h"
 
+// status LED to show when WiFLy is connecting (consider turning off to save power)
+#define USE_STATUS_LED          true
+
 // Define user of external sensors
-#define ENABLE_DHT22            false
-#define ENABLE_POWER_MONITOR    true    // for use with SwitchDoc Lab SunAirPlus
+#define ENABLE_POWER_MONITOR      true    // for use with SwitchDoc Lab SunAirPlus
+#define ENABLE_DHT22              false
 
 #if ENABLE_POWER_MONITOR
 #include "sunAirPlusConfig.h"
 #endif
 
-
-// status LED to show when WiFLy is connecting (consider turning off to save power)
-#define USE_STATUS_LED          true
-
-
 #if ENABLE_DHT22
 #include "dht22Config.h"
-byte dht22MeasurementOk = false;
 #endif
-
-
-
-
-
-
-
-
 
 
 #endif  /* MQTTWIFLYWEATHERBOARD_CONFIG_H_ */

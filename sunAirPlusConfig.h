@@ -30,7 +30,7 @@ PGM_P const SUNAIRPLUS_TOPICS[]       PROGMEM = { BATTERY_VOLTAGE_TOPIC,     // 
                                                   OUTPUT_CURRENT_TOPIC,      // idx = 5
                                                 };
 
-void sunairplus_measurement()
+void publish_sunairplus_measurement()
 {
   float measurement = 0.0;
 
