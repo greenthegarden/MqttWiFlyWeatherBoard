@@ -7,7 +7,7 @@
   in order to compile the code.
 
   In addition, the Wifly-MQTT library from
-  https://github.com/lagoudiana/Wifly-MQTT/tree/master/Arduino-wifly%20MQTT
+  https://github.com/greenthegarden/WiFly
   is used to provide the MQTT interface.
 */
 
@@ -114,8 +114,12 @@ reboot
 // WiFly libraries
 #include <SPI.h>
 #include <WiFly.h>
+#include <PubSubClient.h>
+
+#include "debug.h"
 
 #include "config.h"
+
 
 #if ENABLE_WDT
 #include <avr/wdt.h>  // required for AVR watchdog timer
@@ -143,17 +147,17 @@ char buf[12];
 
 // global variable definitions
 unsigned long previousMeasurementMillis = 0;
-unsigned long previousWindDirMillis = 0;
-boolean  pressure_sensor_status = false;
+unsigned long previousWindDirMillis     = 0;
+boolean  pressure_sensor_status         = false;
 #if ENABLE_WEATHER_METERS
-unsigned int windRPM     = 0;
-unsigned int windRPM_max = 0;
-unsigned int stopped     = 0;
+unsigned int windRPM                    = 0;
+unsigned int windRPM_max                = 0;
+unsigned int stopped                    = 0;
 // volatiles are subject to modification by IRQs
-volatile unsigned long tempwindRPM = 0, windtime = 0, windlast = 0, windinterval = 0;
+volatile unsigned long tempwindRPM      = 0, windtime = 0, windlast = 0, windinterval = 0;
 volatile unsigned char windintcount;
 volatile boolean       gotwspeed;
-volatile unsigned long raintime = 0, rainlast = 0, raininterval = 0, rain = 0;
+volatile unsigned long raintime         = 0, rainlast = 0, raininterval = 0, rain = 0;
 #endif
 
 
@@ -241,7 +245,7 @@ void callback(char* topic, uint8_t* payload, unsigned int length)
 }
 
 WiFlyClient wiflyClient;
-PubSubClient mqttClient(mqtt_server_addr, mqtt_port, callback, wiflyClient);
+PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, wiflyClient);
 
 // dht22 measurement routine
 byte dht22_measurement()
@@ -254,40 +258,43 @@ byte dht22_measurement()
   switch (chk)
   {
   case DHTLIB_OK:
-  //  Serial.print("OK,\t");
+    DEBUG_LOG(1, "OK");
+    mess_buffer[0] = '\0';
+    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[0])));
+    mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_CHECKSUM:
- //   Serial.print("Checksum error,\t");
+    DEBUG_LOG(1, "Checksum error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[1])));
     mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_TIMEOUT:
-//    Serial.print("Time out error,\t");
+    DEBUG_LOG(1, "Time out error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[2])));
     mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_CONNECT:
-//    Serial.print("Connect error,\t");
+    DEBUG_LOG(1, "Connect error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[3])));
     mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_ACK_L:
-//    Serial.print("Ack Low error,\t");
+    DEBUG_LOG(1, "Ack Low error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[4])));
     mqttClient.publish(prog_buffer,mess_buffer);
     break;
   case DHTLIB_ERROR_ACK_H:
-//    Serial.print("Ack High error,\t");
+    DEBUG_LOG(1, "Ack High error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[5])));
     mqttClient.publish(prog_buffer,mess_buffer);
     break;
   default:
-//    Serial.print("Unknown error,\t");
+    DEBUG_LOG(1, "Unknown error");
     mess_buffer[0] = '\0';
     strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[6])));
     mqttClient.publish(prog_buffer,mess_buffer);

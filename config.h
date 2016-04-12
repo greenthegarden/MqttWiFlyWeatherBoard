@@ -46,8 +46,8 @@
 
 // MQTT parameters
 //byte mqtt_server_addr[]     = { 192, 168, 1, 30 };    // Airology
-byte mqtt_server_addr[]       = { 192, 168, 1, 55 };    // Pi
-int mqtt_port                 = 1883;
+IPAddress mqttServerAddr(192, 168, 1, 55);    // Pi
+const int MQTT_PORT           = 1883;
 char mqtt_client_id[]         = "weather";
 #define MQTT_MAX_PACKET_SIZE    168
 #define MQTT_KEEPALIVE          300
