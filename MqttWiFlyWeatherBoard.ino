@@ -33,67 +33,7 @@
     where radix is the number base, ie. 10
 */
 
-/*
-  WiFly module attributes
-    These values are specific to the modules I am using,
-    and configuration of my router.
 
-  RN-XV WiFly Module - Wire Antenna
-    MAC: 00:06:66:50:71:6f
-    IP:  192.168.1.52
-
-  RN-XV WiFly Module – SMA
-    MAC: 00:06:66:71:68:d5
-    IP:  192.168.1.51
-*/
-
-/*
-  WiFly status based on LED
-
-  Sources:
-    http://www.instructables.com/id/WiFly-RN-XV-Module-Wireless-Arduino-Board-Tutorial/
-    http://cairohackerspace.blogspot.com.au/2011/05/beginners-guide-to-connecting-and.html
-
-  Green LED:
-    Solid:         Connected through TCP
-    Slow Blinking: IP address is assigned
-    Fast Blinking: No IP address assigned
-    None/Off:      NA
-
-  Yellow LED
-    Solid:         NA
-    Slow Blinking: NA
-    Fast Blinking: RX/TX Data Transfer
-    None/Off:      No network activity
-
-  Red LED
-    Solid:         NA
-    Slow Blinking: Associated, No internet detected
-    Fast Blinking: Not associated
-    None/Off:      Associated, Internet detected
-*/
-
-/*
-  WiFly configuration
-
-  The following is the sequence of commands I use to
-  configure the WiFly module used when running this code.
-  (ensure values for ssid and phrase entered in place of xxx)
-
-reboot
-$$$
-factory RESET
-
-set wlan join 0    // Stop device connecting while we setup
-
-set ip dhcp 3
-set wlan ssid xxx
-set wlan phrase xxx
-set wlan join 1
-
-save
-reboot
-*/
 
 /*
   Revision history
@@ -111,197 +51,12 @@ reboot
 */
 
 
-// WiFly libraries
-#include <SPI.h>
-#include <WiFly.h>
-#include <PubSubClient.h>
-
 #include "debug.h"
 
 #include "config.h"
 
-
-#if ENABLE_WDT
-#include <avr/wdt.h>  // required for AVR watchdog timer
-#endif
-
-
-// external sensor libraries
-#if ENABLE_SHT15
-#include <SHT1x.h>              // SHT15 humidity sensor library
-#endif
-#if ENABLE_DHT22
-#include <DHT22Config.h>       // DHT22 temperature/humidty sensor library
-#endif
-#if ENABLE_BMP085
-#include <Wire.h>               // I2C library (necessary for pressure sensor)
-#include <SFE_BMP085.h>         // BMP085 pressure sensor library
-#endif
-#if ENABLE_POWER_MONITOR
-#include <Wire.h>
-#include <SDL_Arduino_INA3221.h>
-#endif
-
-// character buffer to support conversion of floats to char
-char buf[12];
-
-// global variable definitions
-unsigned long previousMeasurementMillis = 0;
-unsigned long previousWindDirMillis     = 0;
-boolean  pressureSensorStatus         = false;
-#if ENABLE_WEATHER_METERS
-unsigned int windRpm                    = 0;
-unsigned int windRpmMax                = 0;
-unsigned int windStopped                    = 0;
-// volatiles are subject to modification by IRQs
-volatile unsigned long tempWindRpm      = 0, windTime = 0, windLast = 0, windInterval = 0;
-volatile unsigned char windIntCount;
-volatile boolean       gotWindSpeed;
-volatile unsigned long rainTime         = 0, rainLast = 0, rainInterval = 0, rain = 0;
-#endif
-
-
-// initialisation of remaining sensor objects
-#if ENABLE_SHT15
-SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
-#endif
-#if ENABLE_BMP085
-SFE_BMP085 pressureSensor(BMP_ADDR);
-#endif
-#if ENABLE_POWER_MONITOR
-SDL_Arduino_INA3221 ina3221;
-#endif
-
-// function declarations
-void take_measurement();
-#if ENABLE_WEATHER_METERS
-float get_wind_direction();
-// interrupt routines (these are called by the hardware interrupts, not by the main code)
-void rain_irq();
-float get_wind_direction();
-#if ENABLE_WIND_DIR_AVERAGING
-#include "RunningAverage.h"
-RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
-#endif
-#endif
-
-
-// WiFly setup and connection routines
-
-const byte WIFLY_FAILED_CONNECTIONS_MAX = 2;	// reset wifly after this many failed connections
-byte       wiflyFailedConnections       = 0;
-
-void wifly_connect()
-{
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
-#if USE_STATUS_LED
-  digitalWrite(STATUS_LED, HIGH);
-#endif
-
-  WiFly.begin();
-
-  if (!WiFly.join(SSID, PASSPHRASE, mode)) {
-    wiflyConnected = false;
-    wiflyFailedConnections++;
-#if ENABLE_WDT
-    wdt_reset();
-#endif
-  } else {
-    wiflyConnected = true;
-    wiflyFailedConnections = 0;
-#if USE_STATUS_LED
-    digitalWrite(STATUS_LED, LOW);
-#endif
-  }
-}
-
-void wifly_configure()
-{
-  // Configure WiFly
-  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
-  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
-
-//  WiFly.begin();
-
-//  wifly_connect();
-}
-
-
-// MQTT related routines
-
-// callback definition for MQTT
-void callback(char* topic, uint8_t* payload, unsigned int length)
-{
-  // nothing to do here!!
-}
-
-WiFlyClient wiflyClient;
-PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, wiflyClient);
-
-// dht22 measurement routine
-byte dht22_measurement()
-{
-  byte chk = dht22_reading(DHT22_PIN);
-
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
-
-  switch (chk) {
-    case DHTLIB_OK :
-      DEBUG_LOG(1, "OK");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[0])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    case DHTLIB_ERROR_CHECKSUM :
-      DEBUG_LOG(1, "Checksum error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[1])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    case DHTLIB_ERROR_TIMEOUT :
-      DEBUG_LOG(1, "Time out error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[2])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    case DHTLIB_ERROR_CONNECT :
-      DEBUG_LOG(1, "Connect error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[3])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    case DHTLIB_ERROR_ACK_L :
-      DEBUG_LOG(1, "Ack Low error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[4])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    case DHTLIB_ERROR_ACK_H :
-      DEBUG_LOG(1, "Ack High error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[5])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-    default :
-      DEBUG_LOG(1, "Unknown error");
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(DHT22_STATUS_MESSAGES[6])));
-      mqttClient.publish(progBuffer,messBuffer);
-      break;
-  }
-  return chk;
-}
-
 void publish_measurements()
 {
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
@@ -309,17 +64,10 @@ void publish_measurements()
   if (!wiflyConnected)
     wifly_connect();
 
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
   if (wiflyConnected) {
     // MQTT client setup
 //    mqttClient.disconnect();
     if (mqttClient.connect(mqttClientId)) {
-#if ENABLE_WDT
-      wdt_reset();
-#endif
 
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
@@ -337,186 +85,6 @@ void publish_measurements()
     }
   }
 }
-
-
-/*--------------------------------------------------------------------------------------
- setup()
- Called by the Arduino framework once, before the main loop begins
- --------------------------------------------------------------------------------------*/
-void setup()
-{
-#if ENABLE_WDT
-  wdt_disable();
-#endif
-
-#if USE_STATUS_LED
-  // Configure status LED
-  pinMode(STATUS_LED, OUTPUT);
-  digitalWrite(STATUS_LED, LOW);
-#endif
-
-  // lots of time for the WiFly to start up
-  delay(5000);
-
-  // Configure WiFly
-  wifly_configure();
-
-  wifly_connect();
-
-#if USE_STATUS_LED
-  digitalWrite(STATUS_LED, HIGH);
-#endif
-
-  if (wiflyConnected) {
-    if (mqttClient.connect(mqttClientId)) {
-#if USE_STATUS_LED
-      digitalWrite(STATUS_LED, LOW);
-#endif
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
-      mqttClient.publish(progBuffer,messBuffer);
-    }
-  }
-
-  // Configure sensors
-#if ENABLE_BMP085
-  // set up inputs and outputs
-  pinMode(XCLR, OUTPUT);                // output to BMP085 reset (unused)
-  digitalWrite(XCLR, HIGH);             // make pin high to turn off reset
-
-  pinMode(EOC, INPUT);                  // input from BMP085 end of conversion (unused)
-  digitalWrite(EOC, LOW);               // turn off pullup
-
-  // Reset the humidity sensor connection so that the I2C bus can be accessed
-  TWCR &= ~(_BV(TWEN));                // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  digitalWrite(XCLR, LOW);              // disable the BMP085 while resetting humidity sensor
-  humiditySensor.connectionReset();   // reset the humidity sensor connection
-  TWCR |= _BV(TWEN);                   // turn on I2C enable bit so we can access the BMP085 pressure sensor
-  digitalWrite(XCLR, HIGH);             // enable BMP085
-  delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
-
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
-  if (pressureSensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-    pressureSensorStatus = true;
-    if (mqttClient.connected()) {
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
-      mqttClient.publish(progBuffer, messBuffer);
-    }
-  } else {
-    if (mqttClient.connected()) {
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
-      mqttClient.publish(progBuffer, messBuffer);
-    }
-  }
-#endif
-
-#if ENABLE_POWER_MONITOR
-  ina3221.begin();
-#endif
-
-  if (mqttClient.connected())
-    mqttClient.disconnect();
-
-#if ENABLE_WEATHER_METERS
-  pinMode(WSPEED,INPUT);               // input from wind meters windspeed sensor
-  digitalWrite(WSPEED,HIGH);           // turn on pullup
-
-  pinMode(RAIN,INPUT);                 // input from wind meters rain gauge sensor
-  digitalWrite(RAIN,HIGH);             // turn on pullup
-
-  // init wind speed interrupt global variables
-  gotWindSpeed       = false;
-  windRpm         = 0;
-  windIntCount    = 0;
-
-#if ENABLE_WIND_DIR_AVERAGING
-  wind_dir_avg.clear(); // explicitly start clean
-#endif
-
-  // attach external interrupt pins to IRQ functions
-  attachInterrupt(0, rain_irq,   FALLING);
-  attachInterrupt(1, wind_speed_irq, FALLING);
-
-  // turn on interrupts
-  interrupts();
-#endif
-
-#if ENABLE_WDT
-  wdt_enable(WDTO_8S); // Watchdog timer set for eight seconds
-#endif
-}
-
-
-
-/*--------------------------------------------------------------------------------------
- loop()
- Arduino main loop
- --------------------------------------------------------------------------------------*/
-void loop()
-{
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
-    previousMeasurementMillis = currentMillis;
-    publish_measurements();
-#if ENABLE_WEATHER_METERS
-    windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
-#endif
-  }
-
-
-#if ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING
-  if (currentMillis - previousWindDirMillis >= WIND_DIR_INTERVAL) {
-    previousWindDirMillis = currentMillis;
-    wind_dir_avg.addValue(get_wind_direction());
-  }
-#endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
-
-
-
-  if (wiflyFailedConnections > WIFLY_FAILED_CONNECTIONS_MAX) {
-    delay(AFTER_ERROR_DELAY);
-    wiflyFailedConnections = 0;
-  }
-
-#if ENABLE_WEATHER_METERS
-  // handle weather meter interrupts in loop()
-  static unsigned long windStopped = 0;
-
-  // an interrupt occurred, handle it now
-  if (gotWindSpeed) {
-    gotWindSpeed = false;
-    windRpm = word(tempWindRpm);
-    if (windRpm > windRpmMax) {
-      windRpmMax = windRpm;
-    }
-    windStopped = millis() + ZERODELAY;  // save this timestamp
-  }
-
-  // zero wind speed RPM if we don't get a reading in ZERODELAY ms
-  if (millis() > windStopped) {
-    windRpm = 0;
-    windIntCount = 0;
-  }
-#endif  // ENABLE_WEATHER_METERS
-
-  // require a client.loop in order to receive subscriptions
-  //client.loop();
-}
-
-/*--------------------------------------------------------------------------------------
- end loop()
- --------------------------------------------------------------------------------------*/
-
 
 void takeMeasurement(void)
 {
@@ -746,232 +314,117 @@ void TEMT6000_measurement()
 }
 #endif
 
-#if ENABLE_WEATHER_METERS
-void weather_meter_measurement()
+/*--------------------------------------------------------------------------------------
+ setup()
+ Called by the Arduino framework once, before the main loop begins
+ --------------------------------------------------------------------------------------*/
+void setup()
 {
-  // take wind-direction measurement first
-  // if returns -1 then treat as sensors not connected
-  if (winddirection_measurement()) {
-    windspeed_measurement();
-    rainfall_measurement();
-  } else {
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
-    mqttClient.publish(progBuffer, messBuffer);
-  }
-}
-
-byte winddirection_measurement()
-{
-  float WM_wdirection = -1.0;
-#if ENABLE_WIND_DIR_AVERAGING
-  WM_wdirection = wind_dir_avg.getAverage();
-#else
-  // use instantaneous wind direction
-  WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
+#if USE_STATUS_LED
+  // Configure status LED
+  pinMode(STATUS_LED, OUTPUT);
+  digitalWrite(STATUS_LED, LOW);
 #endif
-  if (WM_wdirection >= 0) {
-    buf[0] = '\0';
-    dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[8])));
-    mqttClient.publish(progBuffer, buf);
-    return 1;
-  } else {
-    return 0;
-  }
-}
 
-void windspeed_measurement()
-{
-  float windSpeedMeasurement = 0.0;
+  // lots of time for the WiFly to start up
+  delay(5000);
 
-  // publish instantaneous wind speed  
-  windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[9])));
-  mqttClient.publish(progBuffer, buf);
+  // Configure WiFly
+  wifly_configure();
 
-  // publish maximum wind speed since last report
-  windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
-  mqttClient.publish(progBuffer, buf);
-}
+  wifly_connect();
 
-void rainfall_measurement()
-{
-  // rainfall unit conversion
-  float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
-  
-  buf[0] = '\0';
-  dtostrf(rainfallMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
-  mqttClient.publish(progBuffer, buf);
-
-  // reset value of rain to zero
-  rain = 0;
-}
+#if USE_STATUS_LED
+  digitalWrite(STATUS_LED, HIGH);
 #endif
+
+  if (wiflyConnected) {
+    if (mqttClient.connect(mqttClientId)) {
+#if USE_STATUS_LED
+      digitalWrite(STATUS_LED, LOW);
+#endif
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      mqttClient.publish(progBuffer,messBuffer);
+    }
+  }
+
+  weatherboard_sensors_initialisaton();
 
 #if ENABLE_POWER_MONITOR
-void sunairplus_measurement()
-{
-  float measurement = 0.0;
-
-  //LIPO battery measurements
-
-  measurement = ina3221.getBusVoltage_V(LIPO_BATTERY_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[0])));
-  mqttClient.publish(progBuffer, buf);
-  
-  measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[1])));
-  mqttClient.publish(progBuffer, buf);
-
-  // Solar cell measurements
-  
-  measurement = ina3221.getBusVoltage_V(SOLAR_CELL_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[2])));
-  mqttClient.publish(progBuffer, buf);
-
-  measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[3])));
-  mqttClient.publish(progBuffer, buf);
-
-  // SunAirPlus output measurements
-
-  measurement = ina3221.getBusVoltage_V(OUTPUT_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[4])));
-  mqttClient.publish(progBuffer, buf);
-
-  measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[5])));
-  mqttClient.publish(progBuffer, buf);
-}
+  ina3221.begin();
 #endif
 
+  if (mqttClient.connected())
+    mqttClient.disconnect();
 
 #if ENABLE_WEATHER_METERS
-void rain_irq()
-// if the Weather Meters are attached, count rain gauge bucket tips as they occur
-// activated by the magnet and reed switch in the rain gauge, attached to input D2
-{
-  rainTime     = micros();              // grab current time
-  rainInterval = rainTime - rainLast;   // calculate interval between this and last event
-
-  if (rainInterval > 100) {
-    // ignore switch-bounce glitches less than 100uS after initial edge
-    rain++;                             // increment bucket counter
-    rainLast = rainTime;                // set up for next event
-  }
-}
-
-void wind_speed_irq()
-// if the Weather Meters are attached, measure anemometer RPM (2 ticks per rotation), set flag if RPM is updated
-// activated by the magnet in the anemometer (2 ticks per rotation), attached to input D3
-
-// this routine measures RPM by measuring the time between anemometer pulses
-// windintcount is the number of pulses we've measured - we need two to measure one full rotation (eliminates any bias between the position of the two magnets)
-// when windintcount is 2, we can calculate the RPM based on the total time from when we got the first pulse
-// note that this routine still needs an outside mechanism to zero the RPM if the anemometer is stopped (no pulses occur within a given period of time)
-{
-  windTime = micros(); // grab current time
-  if ((windIntCount == 0) || ((windTime - windLast) > 10000))  { 
-    // ignore switch-bounce glitches less than 10ms after the reed switch closes
-    if (windIntCount == 0) {
-      // if we're starting a new measurement, reset the interval
-      windInterval = 0;
-    } else {
-      // otherwise, add current interval to the interval timer
-      windInterval += (windTime - windLast);
-    }
-    if (windIntCount == 2) {
-      // we have two measurements (one full rotation), so calculate result and start a new measurement
-      tempWindRpm = (60000000UL / windInterval); // calculate RPM (temporary since it may change unexpectedly)
-      windIntCount = 0;
-      windInterval = 0;
-      gotWindSpeed = true; // set flag for main loop
-    }
-
-    windIntCount++;
-    windLast = windTime; // save the current time so that we can calculate the interval between now and the next interrupt
-  }
-}
-
-float get_wind_direction()
-// read the wind direction sensor, return heading in degrees
-{
-  unsigned int adc = analogRead(WDIR); // get the current reading from the sensor
-
-  // The following table is ADC readings for the wind direction sensor output, sorted from low to high.
-  // Each threshold is the midpoint between adjacent headings. The output is degrees for that ADC reading.
-  // Note that these are not in compass degree order!  See Weather Meters datasheet for more information.
-
-  if (adc < 380) return (112.5);
-  if (adc < 393) return (67.5);
-  if (adc < 414) return (90);
-  if (adc < 456) return (157.5);
-  if (adc < 508) return (135);
-  if (adc < 551) return (202.5);
-  if (adc < 615) return (180);
-  if (adc < 680) return (22.5);
-  if (adc < 746) return (45);
-  if (adc < 801) return (247.5);
-  if (adc < 833) return (225);
-  if (adc < 878) return (337.5);
-  if (adc < 913) return (0);
-  if (adc < 940) return (292.5);
-  if (adc < 967) return (315);
-  if (adc < 990) return (270);
-  return (-1); // error, disconnected?
-}
-
-/* From Weather Meters docs and the Weather Board V3 schematic:
-
- heading         resistance      volts           nominal         midpoint (<)
- 112.5	º	0.69	k	1.2	V	372	counts	380
- 67.5	º	0.89	k	1.26	V	389	counts	393
- 90	º	1	k	1.29	V	398	counts	414
- 157.5	º	1.41	k	1.39	V	430	counts	456
- 135	º	2.2	k	1.56	V	483	counts	508
- 202.5	º	3.14	k	1.72	V	534	counts	551
- 180	º	3.9	k	1.84	V	569	counts	615
- 22.5	º	6.57	k	2.13	V	661	counts	680
- 45	º	8.2	k	2.26	V	700	counts	746
- 247.5	º	14.12	k	2.55	V	792	counts	801
- 225	º	16	k	2.62	V	811	counts	833
- 337.5	º	21.88	k	2.76	V	855	counts	878
- 0	º	33	k	2.91	V	902	counts	913
- 292.5	º	42.12	k	2.98	V	925	counts	940
- 315	º	64.9	k	3.08	V	956	counts	967
- 270	º	98.6	k	3.15	V	978	counts	>967
- */
+  weatherboard_meters_initialisation();
 #endif
+}
+
+
+
+/*--------------------------------------------------------------------------------------
+ loop()
+ Arduino main loop
+ --------------------------------------------------------------------------------------*/
+void loop()
+{
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
+    previousMeasurementMillis = currentMillis;
+    publish_measurements();
+#if ENABLE_WEATHER_METERS
+    windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
+#endif
+  }
+
+#if ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING
+  if (currentMillis - previousWindDirMillis >= WIND_DIR_INTERVAL) {
+    previousWindDirMillis = currentMillis;
+    wind_dir_avg.addValue(get_wind_direction());
+  }
+#endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
+
+
+
+  if (wiflyFailedConnections > WIFLY_FAILED_CONNECTIONS_MAX) {
+    delay(AFTER_ERROR_DELAY);
+    wiflyFailedConnections = 0;
+  }
+
+#if ENABLE_WEATHER_METERS
+  // handle weather meter interrupts in loop()
+  static unsigned long windStopped = 0;
+
+  // an interrupt occurred, handle it now
+  if (gotWindSpeed) {
+    gotWindSpeed = false;
+    windRpm = word(tempWindRpm);
+    if (windRpm > windRpmMax) {
+      windRpmMax = windRpm;
+    }
+    windStopped = millis() + ZERODELAY;  // save this timestamp
+  }
+
+  // zero wind speed RPM if we don't get a reading in ZERODELAY ms
+  if (millis() > windStopped) {
+    windRpm = 0;
+    windIntCount = 0;
+  }
+#endif  // ENABLE_WEATHER_METERS
+
+  // require a client.loop in order to receive subscriptions
+  //client.loop();
+}
+
+/*--------------------------------------------------------------------------------------
+ end loop()
+ --------------------------------------------------------------------------------------*/
+ 
 
 

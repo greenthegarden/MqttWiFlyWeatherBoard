@@ -1,5 +1,5 @@
-#ifndef __NETWORK_CONFIG_H__
-#define __NETWORK_CONFIG_H__
+#ifndef MQTTWIFLYWEATHERBOARD_NETWORKCONFIG_H_
+#define MQTTWIFLYWEATHERBOARD_NETWORKCONFIG_H_
 
 
 // Wifi parameters
@@ -8,5 +8,5 @@ const char PASSPHRASE[]       = "Cambridge&";
 boolean    mode               = true; //or WEP_MODE
 
 
-#endif
+#endif  /* MQTTWIFLYWEATHERBOARD_NETWORKCONFIG_H_ */
 
