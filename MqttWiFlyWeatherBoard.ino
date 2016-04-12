@@ -148,16 +148,16 @@ char buf[12];
 // global variable definitions
 unsigned long previousMeasurementMillis = 0;
 unsigned long previousWindDirMillis     = 0;
-boolean  pressure_sensor_status         = false;
+boolean  pressureSensorStatus         = false;
 #if ENABLE_WEATHER_METERS
-unsigned int windRPM                    = 0;
-unsigned int windRPM_max                = 0;
-unsigned int stopped                    = 0;
+unsigned int windRpm                    = 0;
+unsigned int windRpmMax                = 0;
+unsigned int windStopped                    = 0;
 // volatiles are subject to modification by IRQs
-volatile unsigned long tempwindRPM      = 0, windtime = 0, windlast = 0, windinterval = 0;
-volatile unsigned char windintcount;
-volatile boolean       gotwspeed;
-volatile unsigned long raintime         = 0, rainlast = 0, raininterval = 0, rain = 0;
+volatile unsigned long tempWindRpm      = 0, windTime = 0, windLast = 0, windInterval = 0;
+volatile unsigned char windIntCount;
+volatile boolean       gotWindSpeed;
+volatile unsigned long rainTime         = 0, rainLast = 0, rainInterval = 0, rain = 0;
 #endif
 
 
@@ -176,11 +176,11 @@ SDL_Arduino_INA3221 ina3221;
 #endif
 
 // function declarations
-void takeMeasurement();
+void take_measurement();
 #if ENABLE_WEATHER_METERS
 float get_wind_direction();
 // interrupt routines (these are called by the hardware interrupts, not by the main code)
-void rainIRQ();
+void rain_irq();
 float get_wind_direction();
 #if ENABLE_WIND_DIR_AVERAGING
 #include "RunningAverage.h"
@@ -191,8 +191,8 @@ RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
 
 // WiFly setup and connection routines
 
-const byte wifly_failed_connections_max = 2;	// reset wifly after this many failed connections
-byte       wifly_failed_connections     = 0;
+const byte WIFLY_FAILED_CONNECTIONS_MAX = 2;	// reset wifly after this many failed connections
+byte       wiflyFailedConnections       = 0;
 
 void wifly_connect()
 {
@@ -206,18 +206,15 @@ void wifly_connect()
 
   WiFly.begin();
 
-  if (!WiFly.join(ssid, passphrase, mode))
-  {
-    wifly_connected = false;
-    wifly_failed_connections++;
+  if (!WiFly.join(SSID, PASSPHRASE, mode)) {
+    wiflyConnected = false;
+    wiflyFailedConnections++;
 #if ENABLE_WDT
     wdt_reset();
 #endif
-  }
-  else
-  {
-    wifly_connected = true;
-    wifly_failed_connections = 0;
+  } else {
+    wiflyConnected = true;
+    wiflyFailedConnections = 0;
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
@@ -252,53 +249,52 @@ byte dht22_measurement()
 {
   int chk = DHT.read22(DHT22_PIN);
 
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[5])));
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
 
-  switch (chk)
-  {
-  case DHTLIB_OK:
-    DEBUG_LOG(1, "OK");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[0])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  case DHTLIB_ERROR_CHECKSUM:
-    DEBUG_LOG(1, "Checksum error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[1])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  case DHTLIB_ERROR_TIMEOUT:
-    DEBUG_LOG(1, "Time out error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[2])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  case DHTLIB_ERROR_CONNECT:
-    DEBUG_LOG(1, "Connect error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[3])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  case DHTLIB_ERROR_ACK_L:
-    DEBUG_LOG(1, "Ack Low error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[4])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  case DHTLIB_ERROR_ACK_H:
-    DEBUG_LOG(1, "Ack High error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[5])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
-  default:
-    DEBUG_LOG(1, "Unknown error");
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(dht22_status_messages[6])));
-    mqttClient.publish(prog_buffer,mess_buffer);
-    break;
+  switch (chk) {
+    case DHTLIB_OK :
+      DEBUG_LOG(1, "OK");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[0])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    case DHTLIB_ERROR_CHECKSUM :
+      DEBUG_LOG(1, "Checksum error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[1])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    case DHTLIB_ERROR_TIMEOUT :
+      DEBUG_LOG(1, "Time out error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[2])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    case DHTLIB_ERROR_CONNECT :
+      DEBUG_LOG(1, "Connect error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[3])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    case DHTLIB_ERROR_ACK_L :
+      DEBUG_LOG(1, "Ack Low error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[4])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    case DHTLIB_ERROR_ACK_H :
+      DEBUG_LOG(1, "Ack High error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[5])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
+    default :
+      DEBUG_LOG(1, "Unknown error");
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(dht22_status_messages[6])));
+      mqttClient.publish(progBuffer,messBuffer);
+      break;
   }
   return chk;
 }
@@ -313,19 +309,17 @@ void publish_measurements()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  if (!wifly_connected)
+  if (!wiflyConnected)
     wifly_connect();
 
 #if ENABLE_WDT
   wdt_reset();
 #endif
 
-  if (wifly_connected)
-  {
+  if (wiflyConnected) {
     // MQTT client setup
 //    mqttClient.disconnect();
-    if (mqttClient.connect(mqtt_client_id))
-    {
+    if (mqttClient.connect(mqttClientId)) {
 #if ENABLE_WDT
       wdt_reset();
 #endif
@@ -334,11 +328,11 @@ void publish_measurements()
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mess_buffer[0] = '\0';
-      strcpy_P(mess_buffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
-      mqttClient.publish(prog_buffer,mess_buffer);
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
+      mqttClient.publish(progBuffer,messBuffer);
 
       takeMeasurement();
 
@@ -376,53 +370,50 @@ void setup()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  if (wifly_connected)
-  {
-    if (mqttClient.connect(mqtt_client_id))
-    {
+  if (wiflyConnected) {
+    if (mqttClient.connect(mqttClientId)) {
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[0])));
-      mess_buffer[0] = '\0';
-      strcpy_P(mess_buffer, (char*)pgm_read_word(&(mqtt_status_messages[0])));
-      mqttClient.publish(prog_buffer,mess_buffer);
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      mqttClient.publish(progBuffer,messBuffer);
     }
   }
 
   // Configure sensors
 #if ENABLE_BMP085
   // set up inputs and outputs
-  pinMode(XCLR,OUTPUT);                // output to BMP085 reset (unused)
-  digitalWrite(XCLR,HIGH);             // make pin high to turn off reset
+  pinMode(XCLR, OUTPUT);                // output to BMP085 reset (unused)
+  digitalWrite(XCLR, HIGH);             // make pin high to turn off reset
 
-  pinMode(EOC,INPUT);                  // input from BMP085 end of conversion (unused)
-  digitalWrite(EOC,LOW);               // turn off pullup
+  pinMode(EOC, INPUT);                  // input from BMP085 end of conversion (unused)
+  digitalWrite(EOC, LOW);               // turn off pullup
 
   // Reset the humidity sensor connection so that the I2C bus can be accessed
   TWCR &= ~(_BV(TWEN));                // turn off I2C enable bit so we can access the SHT15 humidity sensor
-  digitalWrite(XCLR,LOW);              // disable the BMP085 while resetting humidity sensor
+  digitalWrite(XCLR, LOW);              // disable the BMP085 while resetting humidity sensor
   humidity_sensor.connectionReset();   // reset the humidity sensor connection
   TWCR |= _BV(TWEN);                   // turn on I2C enable bit so we can access the BMP085 pressure sensor
-  digitalWrite(XCLR,HIGH);             // enable BMP085
+  digitalWrite(XCLR, HIGH);             // enable BMP085
   delay(10);                           // wait for the BMP085 pressure sensor to become ready after reset
 
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[6])));
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
   if (pressure_sensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
-    pressure_sensor_status = true;
+    pressureSensorStatus = true;
     if (mqttClient.connected()) {
-      mess_buffer[0] = '\0';
-      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[0])));
-      mqttClient.publish(prog_buffer, mess_buffer);
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[0])));
+      mqttClient.publish(progBuffer, messBuffer);
     }
-  }
-  else {
+  } else {
     if (mqttClient.connected()) {
-      mess_buffer[0] = '\0';
-      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[1])));
-      mqttClient.publish(prog_buffer, mess_buffer);
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[1])));
+      mqttClient.publish(progBuffer, messBuffer);
     }
   }
 #endif
@@ -442,17 +433,17 @@ void setup()
   digitalWrite(RAIN,HIGH);             // turn on pullup
 
   // init wind speed interrupt global variables
-  gotwspeed       = false;
-  windRPM         = 0;
-  windintcount    = 0;
+  gotWindSpeed       = false;
+  windRpm         = 0;
+  windIntCount    = 0;
 
 #if ENABLE_WIND_DIR_AVERAGING
   wind_dir_avg.clear(); // explicitly start clean
 #endif
 
   // attach external interrupt pins to IRQ functions
-  attachInterrupt(0, rainIRQ,   FALLING);
-  attachInterrupt(1, wspeedIRQ, FALLING);
+  attachInterrupt(0, rain_irq,   FALLING);
+  attachInterrupt(1, wind_speed_irq, FALLING);
 
   // turn on interrupts
   interrupts();
@@ -481,7 +472,7 @@ void loop()
     previousMeasurementMillis = currentMillis;
     publish_measurements();
 #if ENABLE_WEATHER_METERS
-    windRPM_max = 0.0;    // reset to get strongest gust in each measurement period
+    windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
 #endif
   }
 
@@ -495,29 +486,29 @@ void loop()
 
 
 
-  if (wifly_failed_connections > wifly_failed_connections_max) {
+  if (wiflyFailedConnections > WIFLY_FAILED_CONNECTIONS_MAX) {
     delay(AFTER_ERROR_DELAY);
-    wifly_failed_connections = 0;
+    wiflyFailedConnections = 0;
   }
 
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts in loop()
-  static unsigned long windstopped = 0;
+  static unsigned long windStopped = 0;
 
   // an interrupt occurred, handle it now
-  if (gotwspeed) {
-    gotwspeed = false;
-    windRPM = word(tempwindRPM);
-    if (windRPM > windRPM_max) {
-      windRPM_max = windRPM;
+  if (gotWindSpeed) {
+    gotWindSpeed = false;
+    windRpm = word(tempWindRpm);
+    if (windRpm > windRpmMax) {
+      windRpmMax = windRpm;
     }
-    windstopped = millis() + ZERODELAY;  // save this timestamp
+    windStopped = millis() + ZERODELAY;  // save this timestamp
   }
 
   // zero wind speed RPM if we don't get a reading in ZERODELAY ms
-  if (millis() > windstopped) {
-    windRPM = 0;
-    windintcount = 0;
+  if (millis() > windStopped) {
+    windRpm = 0;
+    windIntCount = 0;
   }
 #endif  // ENABLE_WEATHER_METERS
 
@@ -543,9 +534,9 @@ void takeMeasurement(void)
 //  }
 
   // publish measurement start topic
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[12])));
-  mqttClient.publish(prog_buffer, "");
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[12])));
+  mqttClient.publish(progBuffer, "");
 
 #if ENABLE_DHT22
   // take measurement as sensor cannot be be sampled at short intervals
@@ -562,7 +553,7 @@ void takeMeasurement(void)
   humidity_measurement();
 #endif
 #if ENABLE_PRESSURE
-  if ( pressure_sensor_status )
+  if ( pressureSensorStatus )
     BMP085_measurement();
 #endif
 #if ENABLE_LIGHT
@@ -585,9 +576,9 @@ void takeMeasurement(void)
 //  itoa(measurement_count, buf, 10);
 
   // publish measurement end topic
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[13])));
-  mqttClient.publish(prog_buffer, "");
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[13])));
+  mqttClient.publish(progBuffer, "");
 
 #if ENABLE_DHT22
   // reset measurements
@@ -600,25 +591,21 @@ void temperature_measurement()
 {
 #if ENABLE_SHT15
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-
   float SHT15_temp = humidity_sensor.readTemperatureC();  // temperature returned in degrees Celcius
-
   buf[0] = '\0';
   dtostrf(SHT15_temp,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[0])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[0])));
+  mqttClient.publish(progBuffer, buf);
 #endif
 #if ENABLE_DHT22
   if (dht22_measurement_ok) {
     // value is stored in DHT object
     buf[0] = '\0';
     dtostrf(DHT.temperature,1,FLOAT_DECIMAL_PLACES, buf);
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[1])));
-    mqttClient.publish(prog_buffer, buf);
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[1])));
+    mqttClient.publish(progBuffer, buf);
   }
 #endif
 }
@@ -629,25 +616,21 @@ void humidity_measurement()
 {
 #if ENABLE_SHT15
   TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
-
   float SHT15_humidity = humidity_sensor.readHumidity();
-
   buf[0] = '\0';
   dtostrf(SHT15_humidity,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[2])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[2])));
+  mqttClient.publish(progBuffer, buf);
 #endif
 #if ENABLE_DHT22
   if (dht22_measurement_ok) {
     // value is stored in DHT object
     buf[0] = '\0';
     dtostrf(DHT.humidity,1,FLOAT_DECIMAL_PLACES, buf);
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[3])));
-    mqttClient.publish(prog_buffer, buf);
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[3])));
+    mqttClient.publish(progBuffer, buf);
   }
 #endif
 }
@@ -672,24 +655,23 @@ void BMP085_measurement()
     // wait for the measurement to complete
     delay(status);
 
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[4])));
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[4])));
 
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
     status = pressure_sensor.getTemperature(&BMP085_temp); // temperature returned in degrees Celcius
 
-    if (status != 0)
-    {
+    if (status != 0) {
       // publish BMP085 temperature measurement
       buf[0] = '\0';
       dtostrf(BMP085_temp,1,FLOAT_DECIMAL_PLACES, buf);
 
-      mqttClient.publish(prog_buffer, buf);
+      mqttClient.publish(progBuffer, buf);
 
       // prepare topic for pressure measurement
-      prog_buffer[0] = '\0';
-      strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[5])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[5])));
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
@@ -711,34 +693,26 @@ void BMP085_measurement()
           buf[0] = '\0';
           dtostrf(BMP085_pressure,1,FLOAT_DECIMAL_PLACES, buf);
 
-          mqttClient.publish(prog_buffer, buf);
+          mqttClient.publish(progBuffer, buf);
+        } else {
+          messBuffer[0] = '\0';
+          strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[2])));
+          mqttClient.publish(progBuffer, messBuffer);
         }
-        else {
-          mess_buffer[0] = '\0';
-          strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[2])));
-          mqttClient.publish(prog_buffer, mess_buffer);
- //         mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_GET");
-        }
+      } else {
+        messBuffer[0] = '\0';
+        strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[3])));
+        mqttClient.publish(progBuffer, messBuffer);
       }
-      else {
-        mess_buffer[0] = '\0';
-        strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[3])));
-        mqttClient.publish(prog_buffer, mess_buffer);
-//        mqttClient.publish(prog_buffer, "ERR_BMP085_PRESSURE_START");
-      }
+    } else {
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[4])));
+      mqttClient.publish(progBuffer, messBuffer);
     }
-    else {
-      mess_buffer[0] = '\0';
-      strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[4])));
-      mqttClient.publish(prog_buffer, mess_buffer);
- //     mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_GET");
-    }
-  }
-  else {
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(bmp085_status_messages[5])));
-    mqttClient.publish(prog_buffer, mess_buffer);
-//    mqttClient.publish(prog_buffer, "ERR_BMP085_TEMP_START");
+  } else {
+    messBuffer[0] = '\0';
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(bmp085_status_messages[5])));
+    mqttClient.publish(progBuffer, messBuffer);
   }
 }
 #endif
@@ -758,10 +732,10 @@ void TEMT6000_measurement()
   buf[0] = '\0';
   itoa(TEMT6000_light_raw, buf, 10);
 
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[6])));
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[6])));
 
-  mqttClient.publish(prog_buffer, buf);
+  mqttClient.publish(progBuffer, buf);
 
   // convert TEMT6000_light_raw voltage value to percentage
   //map(value, fromLow, fromHigh, toLow, toHigh)
@@ -770,10 +744,10 @@ void TEMT6000_measurement()
   buf[0] = '\0';
   itoa(TEMT6000_light, buf, 10);
 
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[7])));
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[7])));
 
-  mqttClient.publish(prog_buffer, buf);
+  mqttClient.publish(progBuffer, buf);
 }
 #endif
 
@@ -782,20 +756,15 @@ void weather_meter_measurement()
 {
   // take wind-direction measurement first
   // if returns -1 then treat as sensors not connected
-  if (winddirection_measurement())
-  {
+  if (winddirection_measurement()) {
     windspeed_measurement();
     rainfall_measurement();
-  }
-  else
-  {
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(status_topics[1])));
-    mess_buffer[0] = '\0';
-    strcpy_P(mess_buffer, (char*)pgm_read_word(&(weather_meter_messages[0])));
-    mqttClient.publish(prog_buffer, mess_buffer);
-
-    //mqttClient.publish(prog_buffer,"Weather Meter ERROR");
+  } else {
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
+    messBuffer[0] = '\0';
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(weather_meter_messages[0])));
+    mqttClient.publish(progBuffer, messBuffer);
   }
 }
 
@@ -808,61 +777,49 @@ byte winddirection_measurement()
   // use instantaneous wind direction
   WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
 #endif
-  if (WM_wdirection >= 0)
-  {
+  if (WM_wdirection >= 0) {
     buf[0] = '\0';
     dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
-
-    prog_buffer[0] = '\0';
-    strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[8])));
-
-    mqttClient.publish(prog_buffer, buf);
-
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[8])));
+    mqttClient.publish(progBuffer, buf);
     return 1;
-  }
-  else
+  } else {
     return 0;
+  }
 }
 
 void windspeed_measurement()
 {
-  float WM_wspeed = 0.0;
+  float windSpeedMeasurement = 0.0;
 
   // publish instantaneous wind speed  
-  WM_wspeed = float(windRPM) / WIND_RPM_TO_KNOTS;
-
+  windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
   buf[0] = '\0';
-  dtostrf(WM_wspeed,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[9])));
-
-  mqttClient.publish(prog_buffer, buf);
+  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[9])));
+  mqttClient.publish(progBuffer, buf);
 
   // publish maximum wind speed since last report
-  WM_wspeed = float(windRPM_max) / WIND_RPM_TO_KNOTS;
-
+  windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
   buf[0] = '\0';
-  dtostrf(WM_wspeed,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[10])));
-
-  mqttClient.publish(prog_buffer, buf);
+  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[10])));
+  mqttClient.publish(progBuffer, buf);
 }
 
 void rainfall_measurement()
 {
   // rainfall unit conversion
-  float WM_rainfall = rain * RAIN_BUCKETS_TO_MM;
-
+  float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
+  
   buf[0] = '\0';
-  dtostrf(WM_rainfall,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(measurment_topics[11])));
-
-  mqttClient.publish(prog_buffer, buf);
+  dtostrf(rainfallMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(measurment_topics[11])));
+  mqttClient.publish(progBuffer, buf);
 
   // reset value of rain to zero
   rain = 0;
@@ -877,88 +834,70 @@ void sunairplus_measurement()
   //LIPO battery measurements
 
   measurement = ina3221.getBusVoltage_V(LIPO_BATTERY_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[0])));
-
-  mqttClient.publish(prog_buffer, buf);
-
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[0])));
+  mqttClient.publish(progBuffer, buf);
+  
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[1])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[1])));
+  mqttClient.publish(progBuffer, buf);
 
   // Solar cell measurements
-
+  
   measurement = ina3221.getBusVoltage_V(SOLAR_CELL_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[2])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[2])));
+  mqttClient.publish(progBuffer, buf);
 
   measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[3])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[3])));
+  mqttClient.publish(progBuffer, buf);
 
   // SunAirPlus output measurements
 
   measurement = ina3221.getBusVoltage_V(OUTPUT_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[4])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[4])));
+  mqttClient.publish(progBuffer, buf);
 
   measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
-
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-
-  prog_buffer[0] = '\0';
-  strcpy_P(prog_buffer, (char*)pgm_read_word(&(sunairplus_topics[5])));
-
-  mqttClient.publish(prog_buffer, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(sunairplus_topics[5])));
+  mqttClient.publish(progBuffer, buf);
 }
 #endif
 
 
 #if ENABLE_WEATHER_METERS
-void rainIRQ()
+void rain_irq()
 // if the Weather Meters are attached, count rain gauge bucket tips as they occur
 // activated by the magnet and reed switch in the rain gauge, attached to input D2
 {
-  raintime     = micros();              // grab current time
-  raininterval = raintime - rainlast;   // calculate interval between this and last event
+  rainTime     = micros();              // grab current time
+  rainInterval = rainTime - rainLast;   // calculate interval between this and last event
 
-  if (raininterval > 100)               // ignore switch-bounce glitches less than 100uS after initial edge
-  {
+  if (rainInterval > 100) {
+    // ignore switch-bounce glitches less than 100uS after initial edge
     rain++;                             // increment bucket counter
-    rainlast = raintime;                // set up for next event
+    rainLast = rainTime;                // set up for next event
   }
 }
 
-void wspeedIRQ()
+void wind_speed_irq()
 // if the Weather Meters are attached, measure anemometer RPM (2 ticks per rotation), set flag if RPM is updated
 // activated by the magnet in the anemometer (2 ticks per rotation), attached to input D3
 
@@ -967,24 +906,26 @@ void wspeedIRQ()
 // when windintcount is 2, we can calculate the RPM based on the total time from when we got the first pulse
 // note that this routine still needs an outside mechanism to zero the RPM if the anemometer is stopped (no pulses occur within a given period of time)
 {
-  windtime = micros(); // grab current time
-  if ((windintcount == 0) || ((windtime - windlast) > 10000)) // ignore switch-bounce glitches less than 10ms after the reed switch closes
-  {
-    if (windintcount == 0) // if we're starting a new measurement, reset the interval
-      windinterval = 0;
-    else
-      windinterval += (windtime - windlast); // otherwise, add current interval to the interval timer
-
-    if (windintcount == 2) // we have two measurements (one full rotation), so calculate result and start a new measurement
-    {
-      tempwindRPM = (60000000ul / windinterval); // calculate RPM (temporary since it may change unexpectedly)
-      windintcount = 0;
-      windinterval = 0;
-      gotwspeed = true; // set flag for main loop
+  windTime = micros(); // grab current time
+  if ((windIntCount == 0) || ((windTime - windLast) > 10000))  { 
+    // ignore switch-bounce glitches less than 10ms after the reed switch closes
+    if (windIntCount == 0) {
+      // if we're starting a new measurement, reset the interval
+      windInterval = 0;
+    } else {
+      // otherwise, add current interval to the interval timer
+      windInterval += (windTime - windLast);
+    }
+    if (windIntCount == 2) {
+      // we have two measurements (one full rotation), so calculate result and start a new measurement
+      tempWindRpm = (60000000UL / windInterval); // calculate RPM (temporary since it may change unexpectedly)
+      windIntCount = 0;
+      windInterval = 0;
+      gotWindSpeed = true; // set flag for main loop
     }
 
-    windintcount++;
-    windlast = windtime; // save the current time so that we can calculate the interval between now and the next interrupt
+    windIntCount++;
+    windLast = windTime; // save the current time so that we can calculate the interval between now and the next interrupt
   }
 }
 

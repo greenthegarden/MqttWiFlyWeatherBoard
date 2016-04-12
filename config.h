@@ -48,79 +48,79 @@
 //byte mqtt_server_addr[]     = { 192, 168, 1, 30 };    // Airology
 IPAddress mqttServerAddr(192, 168, 1, 55);    // Pi
 const int MQTT_PORT           = 1883;
-char mqtt_client_id[]         = "weather";
+char mqttClientId[]         = "weather";
 #define MQTT_MAX_PACKET_SIZE    168
 #define MQTT_KEEPALIVE          300
-boolean wifly_connected       = false;
-byte measurement_count        = 0;
+boolean wiflyConnected       = false;
+byte measurementCount        = 0;
 
 
 const byte BUFFER_SIZE        = 42;
-char prog_buffer[BUFFER_SIZE];
-char mess_buffer[BUFFER_SIZE];
+char progBuffer[BUFFER_SIZE];
+char messBuffer[BUFFER_SIZE];
 
 
 // MQTT topic definitions
 
 // status topics
 
-const char wifly_topic[]              PROGMEM = "weather/status/wifly";
-const char sensor_topic[]             PROGMEM = "weather/status/sensor";
-const char battery_topic[]            PROGMEM = "weather/status/battery";
-const char memory_topic[]             PROGMEM = "weather/status/memory";
-const char sht15_topic[]              PROGMEM = "weather/status/sht15";
-const char dht22_topic[]              PROGMEM = "weather/status/dht22";
-const char bmp085_topic[]             PROGMEM = "weather/status/bmp085";
+const char WIFLY_STATUS[]             PROGMEM = "weather/status/wifly";
+const char SENSOR_STATUS[]            PROGMEM = "weather/status/sensor";
+const char BATTERY_STATUS[]           PROGMEM = "weather/status/battery";
+const char MEMORY_STATUS[]            PROGMEM = "weather/status/memory";
+const char SHT15_STATUS[]             PROGMEM = "weather/status/sht15";
+const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
+const char BMP085_STATUS[]            PROGMEM = "weather/status/bmp085";
 
-PGM_P const status_topics[]           PROGMEM = { wifly_topic,      // idx = 0
-                                                  sensor_topic,     // idx = 1
-                                                  battery_topic,    // idx = 2
-                                                  memory_topic,     // idx = 3
-                                                  sht15_topic,      // idx = 4
-                                                  dht22_topic,      // idx = 5
-                                                  bmp085_topic,     // idx = 6
+PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,     // idx = 0
+                                                  SENSOR_STATUS,    // idx = 1
+                                                  BATTERY_STATUS,   // idx = 2
+                                                  MEMORY_STATUS,    // idx = 3
+                                                  SHT15_STATUS,     // idx = 4
+                                                  DHT22_STATUS,     // idx = 5
+                                                  BMP085_STATUS,    // idx = 6
                                                 };
 
 // MQTT status messages
-const char mqtt_connected[]           PROGMEM = "Connected";
+const char MQTT_CONNECTION[]          PROGMEM = "Connected";
 
-PGM_P const mqtt_status_messages[]   PROGMEM = { mqtt_connected,   // idx = 0
+PGM_P const mqtt_status_messages[]    PROGMEM = { MQTT_CONNECTION,   // idx = 0
                                                };
 
 // DHT22 status messages
-const char status_ok[]                PROGMEM = "DHT22: OK";
-const char checksum_error[]           PROGMEM = "DHT22: Checksum error";
-const char timeout_error[]            PROGMEM = "DHT22: Time out error";
-const char connect_error[]            PROGMEM = "DHT22: Connect error";
-const char ack_low_error[]            PROGMEM = "DHT22: Ack Low error";
-const char ack_high_error[]           PROGMEM = "DHT22: Ack High error";
-const char unknown_error[]            PROGMEM = "DHT22: Unknown error";
+const char DHT22_STATUS_OK[]          PROGMEM = "DHT22: OK";
+const char dht22_CHECKSUM_ERROR[]     PROGMEM = "DHT22: Checksum error";
+const char DHT22_TIMEOUT_ERROR[]      PROGMEM = "DHT22: Time out error";
+const char DHT22_CONNECT_ERROR[]      PROGMEM = "DHT22: Connect error";
+const char DHT22_ACK_LOW_ERROR[]      PROGMEM = "DHT22: Ack Low error";
+const char DHT22_ACK_HIGH_ERROR[]     PROGMEM = "DHT22: Ack High error";
+const char DHT22_UNKNOWN_ERROR[]      PROGMEM = "DHT22: Unknown error";
 
-PGM_P const dht22_status_messages[]   PROGMEM = { status_ok,        // idx = 0
-                                                  checksum_error,   // idx = 1
-                                                  timeout_error,    // idx = 2
-                                                  connect_error,    // idx = 3
-                                                  ack_low_error,    // idx = 4
-                                                  ack_high_error,   // idx = 5
-                                                  unknown_error,    // idx = 6
+PGM_P const DHT22_STATUS_MESSAGES[]   PROGMEM = { DHT22_STATUS_OK,       // idx = 0
+                                                  dht22_CHECKSUM_ERROR,  // idx = 1
+                                                  DHT22_TIMEOUT_ERROR,   // idx = 2
+                                                  DHT22_CONNECT_ERROR,   // idx = 3
+                                                  DHT22_ACK_LOW_ERROR,   // idx = 4
+                                                  DHT22_ACK_HIGH_ERROR,  // idx = 5
+                                                  DHT22_UNKNOWN_ERROR,   // idx = 6
                                                 };
 
 // BMP085 status messages
 
-const char init_success[]             PROGMEM = "BMP085: init success";
-const char init_failure[]             PROGMEM = "BMP085: init failure";
-const char error_pressure_get[]       PROGMEM = "ERR_BMP085_PRESSURE_GET";
-const char error_pressure_start[]     PROGMEM = "ERR_BMP085_PRESSURE_START";
-const char error_temp_get[]           PROGMEM = "ERR_BMP085_TEMP_GET";
-const char error_temp_start[]         PROGMEM = "ERR_BMP085_TEMP_START";
+const char BMP085_INIT_SUCCESS[]          PROGMEM = "BMP085: Init success";
+const char BMP085_INIT_FAILURE[]          PROGMEM = "BMP085: init failure";
+const char BMP085_ERROR_PRESSURE_START[]  PROGMEM = "BMP085: Pressure Start error";
+const char BMP085_ERROR_PRESSURE_GET[]    PROGMEM = "BMP085: Pressure Get error";
+const char BMP085_ERROR_TEMP_START[]      PROGMEM = "BMP085: Temperature Start error";
+const char BMP085_ERROR_TEMP_GET[]        PROGMEM = "BMP085: Temperature Get error";
 
-PGM_P const bmp085_status_messages[]  PROGMEM = { init_success,         // idx = 0
-                                                  init_failure,         // idx = 1
-                                                  error_pressure_get,   // idx = 2
-                                                  error_pressure_start, // idx = 3
-                                                  error_temp_get,       // idx = 4
-                                                  error_temp_start,     // idx = 5
-                                                };
+PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,          // idx = 0
+                                                      BMP085_INIT_FAILURE,          // idx = 1
+                                                      BMP085_ERROR_PRESSURE_START,  // idx = 2
+                                                      BMP085_ERROR_PRESSURE_GET,    // idx = 3
+                                                      BMP085_ERROR_TEMP_START,      // idx = 4
+                                                      BMP085_ERROR_TEMP_GET,        // idx = 5
+                                                    };
 
 // Weather meter messages Weather Meter ERROR
 const char not_connected[]            PROGMEM = "Weather Meter ERROR";
