@@ -55,49 +55,8 @@
 
 #include "config.h"
 
-void publish_measurements()
+void take_measurements(void)
 {
-#if USE_STATUS_LED
-  digitalWrite(STATUS_LED, HIGH);
-#endif
-
-  if (!wiflyConnected)
-    wifly_connect();
-
-  if (wiflyConnected) {
-    // MQTT client setup
-//    mqttClient.disconnect();
-    if (mqttClient.connect(mqttClientId)) {
-
-#if USE_STATUS_LED
-      digitalWrite(STATUS_LED, LOW);
-#endif
-
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
-      mqttClient.publish(progBuffer,messBuffer);
-
-      takeMeasurement();
-
-      mqttClient.disconnect();
-    }
-  }
-}
-
-void takeMeasurement(void)
-{
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
-// connect to mqtt server
-//  if (!mqttClient.loop())
-//  {
-//    connect_mqtt();
-//  }
-
   // publish measurement start topic
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
@@ -313,6 +272,39 @@ void TEMT6000_measurement()
   mqttClient.publish(progBuffer, buf);
 }
 #endif
+
+void publish_measurements()
+{
+#if USE_STATUS_LED
+  digitalWrite(STATUS_LED, HIGH);
+#endif
+
+  if (!wiflyConnected)
+    wifly_connect();
+
+  if (wiflyConnected) {
+    // MQTT client setup
+//    mqttClient.disconnect();
+    if (mqttClient.connect(mqttClientId)) {
+
+#if USE_STATUS_LED
+      digitalWrite(STATUS_LED, LOW);
+#endif
+
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
+      mqttClient.publish(progBuffer,messBuffer);
+
+      take_measurements();
+
+      mqttClient.disconnect();
+    }
+  }
+}
+
+
 
 /*--------------------------------------------------------------------------------------
  setup()

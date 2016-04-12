@@ -36,10 +36,6 @@ unsigned long previousMeasurementMillis = 0;
 unsigned long previousWindDirMillis     = 0;
 boolean  pressureSensorStatus         = false;
 
-
-// function declarations
-void take_measurement();
-
 // BMP085 status messages
 
 const char BMP085_INIT_SUCCESS[]          PROGMEM = "BMP085: Init success";

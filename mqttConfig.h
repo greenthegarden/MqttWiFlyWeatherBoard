@@ -89,4 +89,5 @@ PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,          // 
                                                   MEASUREMENTS_END,          // idx = 13
                                                 };
                                                 
+                                                
 #endif  /* MQTTWIFLYWEATHERBOARD_MQTTCONFIG_H_ */
