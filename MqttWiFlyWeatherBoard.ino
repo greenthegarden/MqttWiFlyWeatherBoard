@@ -121,7 +121,6 @@ void publish_report()
 }
 
 
-
 /*--------------------------------------------------------------------------------------
  setup()
  Called by the Arduino framework once, before the main loop begins
@@ -151,10 +150,10 @@ void setup()
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
       progBuffer[0] = '\0';
       strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
       mqttClient.publish(progBuffer,messBuffer);
     }
   }
@@ -172,8 +171,9 @@ void setup()
   if (mqttClient.connected())
     mqttClient.disconnect();
 }
-
-
+/*--------------------------------------------------------------------------------------
+ end setup()
+ --------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------
  loop()
@@ -197,8 +197,6 @@ void loop()
     wind_dir_avg.addValue(get_wind_direction());
   }
 #endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
-
-
 
   if (wiflyFailedConnections > WIFLY_FAILED_CONNECTIONS_MAX) {
     delay(AFTER_ERROR_DELAY);
@@ -225,11 +223,7 @@ void loop()
     windIntCount = 0;
   }
 #endif  // ENABLE_WEATHER_METERS
-
-  // require a client.loop in order to receive subscriptions
-  //client.loop();
 }
-
 /*--------------------------------------------------------------------------------------
  end loop()
  --------------------------------------------------------------------------------------*/

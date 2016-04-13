@@ -7,25 +7,21 @@
 #include "debug.h"
 
 
-const byte BUFFER_SIZE        = 42;
+const byte BUFFER_SIZE          = 42;
 char progBuffer[BUFFER_SIZE];
 char messBuffer[BUFFER_SIZE];
 
-#define FLOAT_DECIMAL_PLACES    1
+const byte FLOAT_DECIMAL_PLACES = 1;
 
 // character buffer to support conversion of floats to char
 char buf[12];
 
 // Serial parameters
-const int BAUD_RATE           = 9600;
-
-
+const int BAUD_RATE             = 9600;
 
 // program constants
-
-const unsigned long MEASUREMENT_INTERVAL  =  5UL * 60UL * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
-//#define MEASUREMENT_INTERVAL    120000    // 2 minutes = 2 * 60 * 1000 miliiseconds
-const unsigned long AFTER_ERROR_DELAY      = 60UL * 1000UL;
+const unsigned long MEASUREMENT_INTERVAL =  5UL * 60UL * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
+const unsigned long AFTER_ERROR_DELAY    = 60UL * 1000UL;
 
 
 #include "wiFlyConfig.h"

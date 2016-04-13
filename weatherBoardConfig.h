@@ -76,14 +76,14 @@ void weatherboard_sensors_initialisaton()
   digitalWrite(XCLR, HIGH);             // enable BMP085
   delay(10);                            // wait for the BMP085 pressure sensor to become ready after reset
 
-  if (pressureSensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
+  if (pressureSensor.begin()) {         // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
     pressureSensorStatus = true;
     // publish BMP085 init success message
     if (mqttClient.connected()) {
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
@@ -92,7 +92,7 @@ void weatherboard_sensors_initialisaton()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   }
@@ -169,6 +169,8 @@ void publish_bmp085_measurements()
         
         if (status != 0 ) {
           // publish BMP085 pressure measurement
+          // pressure in millibars (or hectopascal/hPa)
+          // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
           buf[0] = '\0';
           dtostrf(bmp085Pressure,1,FLOAT_DECIMAL_PLACES, buf);
           progBuffer[0] = '\0';
@@ -187,7 +189,7 @@ void publish_bmp085_measurements()
         messBuffer[0] = '\0';
         strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
         progBuffer[0] = '\0';
-        strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
+        strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
         mqttClient.publish(progBuffer, messBuffer);
       }
     } else {
@@ -195,7 +197,7 @@ void publish_bmp085_measurements()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
@@ -203,7 +205,7 @@ void publish_bmp085_measurements()
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
     mqttClient.publish(progBuffer, messBuffer);
   }
 }
@@ -367,8 +369,31 @@ void rain_irq()
   }
 }
 
+byte weatherboard_meters_connected()
+{
+  if (get_wind_direction() < 0) {
+    // likely that weather meters are not conneced
+    messBuffer[0] = '\0';
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
+    mqttClient.publish(progBuffer, messBuffer);
+    return 0;
+  }
+  messBuffer[0] = '\0';
+  strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
+  mqttClient.publish(progBuffer, messBuffer);
+  return 1;
+}
+
 void weatherboard_meters_initialisation()
 {
+  // check wind direction measurement which will indicate an error
+  // publish an error if not connected
+  weatherboard_meters_connected();
+  
   pinMode(WSPEED,INPUT);               // input from wind meters windspeed sensor
   digitalWrite(WSPEED,HIGH);           // turn on pullup
 
@@ -454,19 +479,12 @@ void publish_weather_meter_measurement()
 {
   // take wind-direction measurement first
   // if returns -1 then treat as sensors not connected
-  if (publish_wind_direction_measurement()) {
+  if (weatherboard_meters_connected()) {
+    publish_wind_direction_measurement();
     publish_windspeed_measurement();
     publish_rainfall_measurement();
-  } else {
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
-    mqttClient.publish(progBuffer, messBuffer);
   }
 }
-
-
 
 #endif  /* ENABLE_WEATHER_METERS */
 

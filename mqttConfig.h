@@ -28,20 +28,18 @@ PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, wiflyClient);
 // status topics
 
 const char WIFLY_STATUS[]             PROGMEM = "weather/status/wifly";
-const char SENSOR_STATUS[]            PROGMEM = "weather/status/sensor";
 const char BATTERY_STATUS[]           PROGMEM = "weather/status/battery";
 const char MEMORY_STATUS[]            PROGMEM = "weather/status/memory";
-const char SHT15_STATUS[]             PROGMEM = "weather/status/sht15";
-const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
 const char BMP085_STATUS[]            PROGMEM = "weather/status/bmp085";
+const char WEATHER_METERS_STATUS[]    PROGMEM = "weather/status/wm";
+const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
 
 PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,             // idx = 0
-                                                  SENSOR_STATUS,            // idx = 1
-                                                  BATTERY_STATUS,           // idx = 2
-                                                  MEMORY_STATUS,            // idx = 3
-                                                  SHT15_STATUS,             // idx = 4
+                                                  BATTERY_STATUS,           // idx = 1
+                                                  MEMORY_STATUS,            // idx = 2
+                                                  BMP085_STATUS,            // idx = 3
+                                                  WEATHER_METERS_STATUS,    // idx = 4
                                                   DHT22_STATUS,             // idx = 5
-                                                  BMP085_STATUS,            // idx = 6
                                                 };
 
 // MQTT payloads
