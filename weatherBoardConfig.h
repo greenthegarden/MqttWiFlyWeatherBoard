@@ -38,12 +38,12 @@ boolean       pressureSensorStatus      = false;
 
 // BMP085 status messages
 
-const char BMP085_INIT_SUCCESS[]          PROGMEM = "BMP085: Init success";
-const char BMP085_INIT_FAILURE[]          PROGMEM = "BMP085: init failure";
-const char BMP085_ERROR_TEMP_START[]      PROGMEM = "BMP085: Temperature Start error";
-const char BMP085_ERROR_TEMP_GET[]        PROGMEM = "BMP085: Temperature Get error";
-const char BMP085_ERROR_PRESSURE_START[]  PROGMEM = "BMP085: Pressure Start error";
-const char BMP085_ERROR_PRESSURE_GET[]    PROGMEM = "BMP085: Pressure Get error";
+const char BMP085_INIT_SUCCESS[]          PROGMEM = "INIT: Success";
+const char BMP085_INIT_FAILURE[]          PROGMEM = "INIT: Failure";
+const char BMP085_ERROR_TEMP_START[]      PROGMEM = "ERROR: Temperature Start";
+const char BMP085_ERROR_TEMP_GET[]        PROGMEM = "ERROR: Temperature Get";
+const char BMP085_ERROR_PRESSURE_START[]  PROGMEM = "ERROR: Pressure Start";
+const char BMP085_ERROR_PRESSURE_GET[]    PROGMEM = "ERROR: Pressure Get";
 
 PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,          // idx = 0
                                                       BMP085_INIT_FAILURE,          // idx = 1
@@ -242,6 +242,7 @@ void publish_temt6000_measurement()
 #if ENABLE_WEATHER_METERS
 
 // Global variables 
+const unsigned int ZERODELAY        = 4000;     // ms, zero RPM if no result for this time period
 unsigned int windRpm                = 0;
 unsigned int windRpmMax             = 0;
 unsigned int windStopped            = 0;
@@ -257,6 +258,7 @@ volatile unsigned long rainLast     = 0;
 volatile unsigned long rainInterval = 0;
 volatile unsigned long rain         = 0;
 
+
 // Constant conversion factors
 //const float WIND_RPM_TO_MPH  = 22.686745;         // divide RPM by this for velocity
 const float WIND_RPM_TO_MPS    = 50.748803;         // divide RPM by this for meters per second
@@ -264,7 +266,6 @@ const float WIND_RPM_TO_MPS    = 50.748803;         // divide RPM by this for me
 const float WIND_RPM_TO_KNOTS  = WIND_RPM_TO_MPS / 1.943844492;
 //const float RAIN_BUCKETS_TO_INCHES = 0.014815;    // multiply bucket tips by this for inches
 const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by this for mm
-const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result for this time period (see irq below)
 
 #if ENABLE_WIND_DIR_AVERAGING
 #include "RunningAverage.h"

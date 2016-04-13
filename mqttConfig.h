@@ -44,12 +44,12 @@ PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,             // i
 
 // MQTT payloads
 const char MQTT_PAYLOAD_CONNECTED[]   PROGMEM = "CONNECTED";
-const char MQTT_PAYLOAD_WM_ERROR[]    PROGMEM = "Weather Meter ERROR";
+const char MQTT_PAYLOAD_ERROR[]       PROGMEM = "ERROR";
 const char MQTT_PAYLOAD_START[]       PROGMEM = "START";
 const char MQTT_PAYLOAD_END[]         PROGMEM = "END";
 
 PGM_P const MQTT_PAYLOADS[]           PROGMEM = { MQTT_PAYLOAD_CONNECTED,   // idx = 0
-                                                  MQTT_PAYLOAD_WM_ERROR,    // idx = 1
+                                                  MQTT_PAYLOAD_ERROR,       // idx = 1
                                                   MQTT_PAYLOAD_START,       // idx = 2
                                                   MQTT_PAYLOAD_END,         // idx = 3
                                                 };

@@ -160,12 +160,12 @@ void setup()
 
   weatherboard_sensors_initialisaton();
 
-#if ENABLE_POWER_MONITOR
-  ina3221.begin();
-#endif
-
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_initialisation();
+#endif
+
+#if ENABLE_POWER_MONITOR
+  ina3221.begin();
 #endif
 
   if (mqttClient.connected())
@@ -204,7 +204,7 @@ void loop()
   }
 
 #if ENABLE_WEATHER_METERS
-  // handle weather meter interrupts in loop()
+  // handle weather meter interrupts
   static unsigned long windStopped = 0;
 
   // an interrupt occurred, handle it now
@@ -217,7 +217,7 @@ void loop()
     windStopped = millis() + ZERODELAY;  // save this timestamp
   }
 
-  // zero wind speed RPM if we don't get a reading in ZERODELAY ms
+  // zero wind speed RPM if a reading does not occur in ZERODELAY ms
   if (millis() > windStopped) {
     windRpm = 0;
     windIntCount = 0;

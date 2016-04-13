@@ -36,11 +36,11 @@ const unsigned long AFTER_ERROR_DELAY    = 60UL * 1000UL;
 #include "weatherBoardConfig.h"
 
 // status LED to show when WiFLy is connecting (consider turning off to save power)
-#define USE_STATUS_LED          true
+#define USE_STATUS_LED            true
 
 // Define user of external sensors
 #define ENABLE_POWER_MONITOR      true    // for use with SwitchDoc Lab SunAirPlus
-#define ENABLE_DHT22              false
+#define ENABLE_DHT22              true
 
 #if ENABLE_POWER_MONITOR
 #include "sunAirPlusConfig.h"

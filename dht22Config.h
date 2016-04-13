@@ -1,10 +1,35 @@
-#ifndef MQTTWIFLYWEATHERBOARD_MQTTCONFIG_H_
-#define MQTTWIFLYWEATHERBOARD_MQTTCONFIG_H_
+#ifndef MQTTWIFLYWEATHERBOARD_DHT22CONFIG_H_
+#define MQTTWIFLYWEATHERBOARD_DHT22CONFIG_H_
 
 
 #include <DHT22Config.h>       // DHT22 temperature/humidty sensor library
 
+
 const int DHT22_PIN = 11;
+
+void publish_dht22_temperature_measurement()
+{
+  DEBUG_LOG(3, "DHT22 temperature measurement: ");
+  // value is stored in DHT object
+  DEBUG_LOG(3, dht.temperature);
+  buf[0] = '\0';
+  dtostrf(dht.temperature, 1, FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
+  mqttClient.publish(progBuffer, buf);
+}
+
+void publish_dht22_humidity_measurement()
+{
+  DEBUG_LOG(3, "DHT22 humidity measurement: ");
+  // value is stored in DHT object
+  DEBUG_LOG(3, dht.humidity);
+  buf[0] = '\0';
+  dtostrf(dht.humidity, 1, FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
+  mqttClient.publish(progBuffer, buf);
+}
 
 byte dht22_measurement()
 {
@@ -60,30 +85,6 @@ byte dht22_measurement()
       break;
   }
   return chk;
-}
-
-void publish_dht22_temperature_measurement()
-{
-  DEBUG_LOG(3, "DHT22 temperature measurement: ");
-  // value is stored in DHT object
-  DEBUG_LOG(3, dht.temperature);
-  buf[0] = '\0';
-  dtostrf(dht.temperature, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
-  mqttClient.publish(progBuffer, buf);
-}
-
-void publish_dht22_humidity_measurement()
-{
-  DEBUG_LOG(3, "DHT22 humidity measurement: ");
-  // value is stored in DHT object
-  DEBUG_LOG(3, dht.humidity);
-  buf[0] = '\0';
-  dtostrf(dht.humidity, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
-  mqttClient.publish(progBuffer, buf);
 }
 
 void publish_dht22_measurements()
