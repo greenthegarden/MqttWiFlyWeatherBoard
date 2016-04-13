@@ -67,7 +67,7 @@ void publish_measurements(void)
   publish_weather_meter_measurement();
 #endif
 #if ENABLE_DHT22
-  if (dht22_measurement() == DHTLIB_OK) { publish_dht22_measurements(); }
+  publish_dht22_measurements();
 #endif
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement();
