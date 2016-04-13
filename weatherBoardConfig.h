@@ -34,29 +34,27 @@
 // global variable definitions
 unsigned long previousMeasurementMillis = 0;
 unsigned long previousWindDirMillis     = 0;
-boolean  pressureSensorStatus         = false;
+boolean       pressureSensorStatus      = false;
 
 // BMP085 status messages
 
 const char BMP085_INIT_SUCCESS[]          PROGMEM = "BMP085: Init success";
 const char BMP085_INIT_FAILURE[]          PROGMEM = "BMP085: init failure";
-const char BMP085_ERROR_PRESSURE_START[]  PROGMEM = "BMP085: Pressure Start error";
-const char BMP085_ERROR_PRESSURE_GET[]    PROGMEM = "BMP085: Pressure Get error";
 const char BMP085_ERROR_TEMP_START[]      PROGMEM = "BMP085: Temperature Start error";
 const char BMP085_ERROR_TEMP_GET[]        PROGMEM = "BMP085: Temperature Get error";
+const char BMP085_ERROR_PRESSURE_START[]  PROGMEM = "BMP085: Pressure Start error";
+const char BMP085_ERROR_PRESSURE_GET[]    PROGMEM = "BMP085: Pressure Get error";
 
 PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,          // idx = 0
                                                       BMP085_INIT_FAILURE,          // idx = 1
-                                                      BMP085_ERROR_PRESSURE_START,  // idx = 2
-                                                      BMP085_ERROR_PRESSURE_GET,    // idx = 3
-                                                      BMP085_ERROR_TEMP_START,      // idx = 4
-                                                      BMP085_ERROR_TEMP_GET,        // idx = 5
+                                                      BMP085_ERROR_TEMP_START,      // idx = 2
+                                                      BMP085_ERROR_TEMP_GET,        // idx = 3
+                                                      BMP085_ERROR_PRESSURE_START,  // idx = 4
+                                                      BMP085_ERROR_PRESSURE_GET,    // idx = 5
                                                     };
 
 
-
-
-// initialisation of remaining sensor objects
+// initialisation of sensor objects
 SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
 SFE_BMP085 pressureSensor(BMP_ADDR);
 
@@ -78,19 +76,23 @@ void weatherboard_sensors_initialisaton()
   digitalWrite(XCLR, HIGH);             // enable BMP085
   delay(10);                            // wait for the BMP085 pressure sensor to become ready after reset
 
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
   if (pressureSensor.begin()) {        // initialize the BMP085 pressure sensor (important to get calibration values stored on the device)
     pressureSensorStatus = true;
+    // publish BMP085 init success message
     if (mqttClient.connected()) {
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
+    // publish BMP085 init failure message
     if (mqttClient.connected()) {
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   }
@@ -98,7 +100,7 @@ void weatherboard_sensors_initialisaton()
 
 void publish_sht15_measurements()
 {
-  TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so we can access the SHT15 humidity sensor
+  TWCR &= ~(_BV(TWEN));  // turn off I2C enable bit so the SHT15 humidity sensor can be accessed
   
   float measurement = 0.0;
   
@@ -115,7 +117,7 @@ void publish_sht15_measurements()
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[1])));
   mqttClient.publish(progBuffer, buf);
 }
 
@@ -137,9 +139,6 @@ void publish_bmp085_measurements()
     // wait for the measurement to complete
     delay(status);
 
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
-
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
     status = pressureSensor.getTemperature(&bmp085Temp); // temperature returned in degrees Celcius
@@ -148,12 +147,10 @@ void publish_bmp085_measurements()
       // publish BMP085 temperature measurement
       buf[0] = '\0';
       dtostrf(bmp085Temp,1,FLOAT_DECIMAL_PLACES, buf);
-      mqttClient.publish(progBuffer, buf);
-
-      // prepare topic for pressure measurement
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
-
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
+      mqttClient.publish(progBuffer, buf);
+ 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res, longest wait)
       // if request is successful, the number of ms to wait is returned
@@ -169,29 +166,44 @@ void publish_bmp085_measurements()
         // (if temperature is stable, one temperature measurement can be used for a number of pressure measurements)
         // function returns 1 if successful, 0 if failure
         status = pressureSensor.getPressure(&bmp085Pressure, &bmp085Temp); // mbar, deg C
+        
         if (status != 0 ) {
           // publish BMP085 pressure measurement
           buf[0] = '\0';
           dtostrf(bmp085Pressure,1,FLOAT_DECIMAL_PLACES, buf);
+          progBuffer[0] = '\0';
+          strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[3])));
           mqttClient.publish(progBuffer, buf);
         } else {
+          // publish pressure get error
           messBuffer[0] = '\0';
-          strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
+          strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
+          progBuffer[0] = '\0';
+          strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
           mqttClient.publish(progBuffer, messBuffer);
         }
       } else {
+        // publish pressure start error
         messBuffer[0] = '\0';
-        strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
+        strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
+        progBuffer[0] = '\0';
+        strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
         mqttClient.publish(progBuffer, messBuffer);
       }
     } else {
+      // publish temperature get error
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
+    // publish temperature start error
     messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
     mqttClient.publish(progBuffer, messBuffer);
   }
 }
@@ -210,7 +222,7 @@ void publish_temt6000_measurement()
   buf[0] = '\0';
   itoa(TEMT6000_light_raw, buf, 10);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
   mqttClient.publish(progBuffer, buf);
 
   // convert TEMT6000_light_raw voltage value to percentage
@@ -220,38 +232,28 @@ void publish_temt6000_measurement()
   buf[0] = '\0';
   itoa(TEMT6000_light, buf, 10);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
   mqttClient.publish(progBuffer, buf);
 }
-
-
 
 
 #if ENABLE_WEATHER_METERS
 
 // Global variables 
-unsigned int windRpm                    = 0;
-unsigned int windRpmMax                = 0;
-unsigned int windStopped                    = 0;
+unsigned int windRpm                = 0;
+unsigned int windRpmMax             = 0;
+unsigned int windStopped            = 0;
 // volatiles are subject to modification by IRQs
-volatile unsigned long tempWindRpm      = 0, windTime = 0, windLast = 0, windInterval = 0;
+volatile unsigned long tempWindRpm  = 0;
+volatile unsigned long windTime     = 0;
+volatile unsigned long windLast     = 0;
+volatile unsigned long windInterval = 0;
 volatile unsigned char windIntCount;
 volatile boolean       gotWindSpeed;
-volatile unsigned long rainTime         = 0, rainLast = 0, rainInterval = 0, rain = 0;
-
-// Function definitions
-float get_wind_direction();
-// interrupt routines (these are called by the hardware interrupts, not by the main code)
-void rain_irq();
-float get_wind_direction();
-
-#if ENABLE_WIND_DIR_AVERAGING
-#include "RunningAverage.h"
-byte WIND_DIR_AVERAGING_SIZE    = 10;
-unsigned long WIND_DIR_INTERVAL = 1000;
-RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
-#endif
-
+volatile unsigned long rainTime     = 0;
+volatile unsigned long rainLast     = 0;
+volatile unsigned long rainInterval = 0;
+volatile unsigned long rain         = 0;
 
 // Constant conversion factors
 //const float WIND_RPM_TO_MPH  = 22.686745;         // divide RPM by this for velocity
@@ -262,20 +264,13 @@ const float WIND_RPM_TO_KNOTS  = WIND_RPM_TO_MPS / 1.943844492;
 const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by this for mm
 const unsigned int ZERODELAY   = 4000;              // ms, zero RPM if no result for this time period (see irq below)
 
+#if ENABLE_WIND_DIR_AVERAGING
+#include "RunningAverage.h"
+byte WIND_DIR_AVERAGING_SIZE    = 10;
+unsigned long WIND_DIR_INTERVAL = 1000;
+RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
+#endif
 
-void rain_irq()
-// if the Weather Meters are attached, count rain gauge bucket tips as they occur
-// activated by the magnet and reed switch in the rain gauge, attached to input D2
-{
-  rainTime     = micros();              // grab current time
-  rainInterval = rainTime - rainLast;   // calculate interval between this and last event
-
-  if (rainInterval > 100) {
-    // ignore switch-bounce glitches less than 100uS after initial edge
-    rain++;                             // increment bucket counter
-    rainLast = rainTime;                // set up for next event
-  }
-}
 
 void wind_speed_irq()
 // if the Weather Meters are attached, measure anemometer RPM (2 ticks per rotation), set flag if RPM is updated
@@ -358,76 +353,17 @@ float get_wind_direction()
  270  º 98.6  k 3.15  V 978 counts  >967
  */
 
-byte publish_wind_direction_measurement()
+void rain_irq()
+// if the Weather Meters are attached, count rain gauge bucket tips as they occur
+// activated by the magnet and reed switch in the rain gauge, attached to input D2
 {
-  float WM_wdirection = -1.0;
-#if ENABLE_WIND_DIR_AVERAGING
-  WM_wdirection = wind_dir_avg.getAverage();
-#else
-  // use instantaneous wind direction
-  WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
-#endif
-  if (WM_wdirection >= 0) {
-    buf[0] = '\0';
-    dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[8])));
-    mqttClient.publish(progBuffer, buf);
-    return 1;
-  } else {
-    return 0;
-  }
-}
+  rainTime     = micros();              // grab current time
+  rainInterval = rainTime - rainLast;   // calculate interval between this and last event
 
-void publish_windspeed_measurement()
-{
-  float windSpeedMeasurement = 0.0;
-
-  // publish instantaneous wind speed  
-  windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[9])));
-  mqttClient.publish(progBuffer, buf);
-
-  // publish maximum wind speed since last report
-  windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
-  mqttClient.publish(progBuffer, buf);
-}
-
-void publish_rainfall_measurement()
-{
-  // rainfall unit conversion
-  float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
-  
-  buf[0] = '\0';
-  dtostrf(rainfallMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
-  mqttClient.publish(progBuffer, buf);
-
-  // reset value of rain to zero
-  rain = 0;
-}
-
-void publish_weather_meter_measurement()
-{
-  // take wind-direction measurement first
-  // if returns -1 then treat as sensors not connected
-  if (publish_wind_direction_measurement()) {
-    publish_windspeed_measurement();
-    publish_rainfall_measurement();
-  } else {
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
-    mqttClient.publish(progBuffer, messBuffer);
+  if (rainInterval > 100) {
+    // ignore switch-bounce glitches less than 100uS after initial edge
+    rain++;                             // increment bucket counter
+    rainLast = rainTime;                // set up for next event
   }
 }
 
@@ -455,6 +391,82 @@ void weatherboard_meters_initialisation()
   // turn on interrupts
   interrupts();
 }
+
+void publish_windspeed_measurement()
+{
+  float windSpeedMeasurement = 0.0;
+
+  // publish instantaneous wind speed  
+  windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
+  buf[0] = '\0';
+  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
+  mqttClient.publish(progBuffer, buf);
+
+  // publish maximum wind speed since last report
+  windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
+  buf[0] = '\0';
+  dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
+  mqttClient.publish(progBuffer, buf);
+}
+
+byte publish_wind_direction_measurement()
+{
+  float WM_wdirection = -1.0;
+#if ENABLE_WIND_DIR_AVERAGING
+  WM_wdirection = wind_dir_avg.getAverage();
+#else
+  // use instantaneous wind direction
+  WM_wdirection = get_wind_direction();  // should return a -1 if disconnected
+#endif
+  if (WM_wdirection >= 0) {
+    buf[0] = '\0';
+    dtostrf(WM_wdirection,1,FLOAT_DECIMAL_PLACES, buf);
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[8])));
+    mqttClient.publish(progBuffer, buf);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+
+void publish_rainfall_measurement()
+{
+  // rainfall unit conversion
+  float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
+  
+  buf[0] = '\0';
+  dtostrf(rainfallMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
+  progBuffer[0] = '\0';
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[9])));
+  mqttClient.publish(progBuffer, buf);
+
+  // reset value of rain to zero
+  rain = 0;
+}
+
+void publish_weather_meter_measurement()
+{
+  // take wind-direction measurement first
+  // if returns -1 then treat as sensors not connected
+  if (publish_wind_direction_measurement()) {
+    publish_windspeed_measurement();
+    publish_rainfall_measurement();
+  } else {
+    messBuffer[0] = '\0';
+    strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
+    progBuffer[0] = '\0';
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[1])));
+    mqttClient.publish(progBuffer, messBuffer);
+  }
+}
+
+
 
 #endif  /* ENABLE_WEATHER_METERS */
 

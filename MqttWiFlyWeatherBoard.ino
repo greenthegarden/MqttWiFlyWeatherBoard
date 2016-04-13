@@ -57,11 +57,6 @@
 
 void publish_measurements(void)
 {
-  // publish measurement start topic
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
-  mqttClient.publish(progBuffer, "");
-
   publish_sht15_measurements();
   if (pressureSensorStatus) { publish_bmp085_measurements(); }
   publish_temt6000_measurement();
@@ -77,17 +72,6 @@ void publish_measurements(void)
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement();
 #endif
-
-  // publish measurement end topic with message
-  // message is number of measurements included
-
-//  buf[0] = '\0';
-//  itoa(measurement_count, buf, 10);
-
-  // publish measurement end topic
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[13])));
-  mqttClient.publish(progBuffer, "");
 }
 
 
@@ -109,13 +93,27 @@ void publish_report()
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
-      mqttClient.publish(progBuffer,messBuffer);
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      mqttClient.publish(progBuffer, messBuffer);
+
+      // publish report start topic
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[2])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
+      mqttClient.publish(progBuffer, messBuffer);
 
       publish_measurements();
+
+      // publish report end topic
+      messBuffer[0] = '\0';
+      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[3])));
+      progBuffer[0] = '\0';
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
+      mqttClient.publish(progBuffer, messBuffer);
 
       mqttClient.disconnect();
     }

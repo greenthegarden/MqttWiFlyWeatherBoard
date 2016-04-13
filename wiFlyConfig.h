@@ -72,19 +72,21 @@ reboot
 
 #include "networkConfig.h"
 
-WiFlyClient wiflyClient;
-
 const byte WIFLY_FAILED_CONNECTIONS_MAX = 2;  // reset wifly after this many failed connections
 byte       wiflyFailedConnections       = 0;
 
 boolean wiflyConnected = false;
 
+WiFlyClient wiflyClient;
+
+void wifly_configure()
+{
+  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
+  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
+}
+
 void wifly_connect()
 {
-#if ENABLE_WDT
-  wdt_reset();
-#endif
-
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
@@ -94,9 +96,6 @@ void wifly_connect()
   if (!WiFly.join(SSID, PASSPHRASE, mode)) {
     wiflyConnected = false;
     wiflyFailedConnections++;
-#if ENABLE_WDT
-    wdt_reset();
-#endif
   } else {
     wiflyConnected = true;
     wiflyFailedConnections = 0;
@@ -104,17 +103,6 @@ void wifly_connect()
     digitalWrite(STATUS_LED, LOW);
 #endif
   }
-}
-
-void wifly_configure()
-{
-  // Configure WiFly
-  Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
-  WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
-
-//  WiFly.begin();
-
-//  wifly_connect();
 }
 
 

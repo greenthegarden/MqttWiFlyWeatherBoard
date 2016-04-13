@@ -14,7 +14,7 @@ void publish_dht22_temperature_measurement()
   buf[0] = '\0';
   dtostrf(dht.temperature, 1, FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
   mqttClient.publish(progBuffer, buf);
 }
 
@@ -26,7 +26,7 @@ void publish_dht22_humidity_measurement()
   buf[0] = '\0';
   dtostrf(dht.humidity, 1, FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[3])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
   mqttClient.publish(progBuffer, buf);
 }
 

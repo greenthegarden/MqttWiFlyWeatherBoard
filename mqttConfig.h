@@ -7,10 +7,11 @@
 
 // MQTT parameters
 IPAddress mqttServerAddr(192, 168, 1, 55);    // Pi
-char mqttClientId[]         = "weather";
+char mqttClientId[]           = "weather";
 const int MQTT_PORT           = 1883;
-//#define MQTT_MAX_PACKET_SIZE    168
-//#define MQTT_KEEPALIVE          300
+//#define MQTT_MAX_PACKET_SIZE  168
+//#define MQTT_KEEPALIVE        300
+
 
 // callback definition for MQTT
 void callback(char* topic, uint8_t* payload, unsigned int length)
@@ -34,13 +35,13 @@ const char SHT15_STATUS[]             PROGMEM = "weather/status/sht15";
 const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
 const char BMP085_STATUS[]            PROGMEM = "weather/status/bmp085";
 
-PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,     // idx = 0
-                                                  SENSOR_STATUS,    // idx = 1
-                                                  BATTERY_STATUS,   // idx = 2
-                                                  MEMORY_STATUS,    // idx = 3
-                                                  SHT15_STATUS,     // idx = 4
-                                                  DHT22_STATUS,     // idx = 5
-                                                  BMP085_STATUS,    // idx = 6
+PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,             // idx = 0
+                                                  SENSOR_STATUS,            // idx = 1
+                                                  BATTERY_STATUS,           // idx = 2
+                                                  MEMORY_STATUS,            // idx = 3
+                                                  SHT15_STATUS,             // idx = 4
+                                                  DHT22_STATUS,             // idx = 5
+                                                  BMP085_STATUS,            // idx = 6
                                                 };
 
 // MQTT payloads
@@ -76,19 +77,19 @@ const char DHT22_HUMIDITY_TOPIC[]     PROGMEM = "weather/measurement/DHT22_humid
 const char MEASUREMENTS_REPORT[]      PROGMEM = "weather/measurement/report";
 
 //tables to refer to strings
-PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,          // idx = 0
-                                                  SHT15_HUMIDITY_TOPIC,          // idx = 1
-                                                  BMP085_TEMP_TOPIC,      // idx = 2
-                                                  BMP085_PRESSURE_TOPIC,      // idx = 3
-                                                  TEMT6000_LIGHT_RAW_TOPIC,         // idx = 4
+PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,         // idx = 0
+                                                  SHT15_HUMIDITY_TOPIC,     // idx = 1
+                                                  BMP085_TEMP_TOPIC,        // idx = 2
+                                                  BMP085_PRESSURE_TOPIC,    // idx = 3
+                                                  TEMT6000_LIGHT_RAW_TOPIC, // idx = 4
                                                   TEMT6000_LIGHT_TOPIC,     // idx = 5
-                                                  WIND_SPEED_TOPIC,  // idx = 6
-                                                  WIND_SPEED_MAX_TOPIC,      // idx = 7
-                                                  WIND_DIRECTION_TOPIC,            // idx = 8
-                                                  RAINFALL_TOPIC,            // idx = 9
-                                                  DHT22_TEMP_TOPIC,        // idx = 10
-                                                  DHT22_HUMIDITY_TOPIC,            // idx = 11
-                                                  MEASUREMENTS_REPORT,        // idx = 12
+                                                  WIND_SPEED_TOPIC,         // idx = 6
+                                                  WIND_SPEED_MAX_TOPIC,     // idx = 7
+                                                  WIND_DIRECTION_TOPIC,     // idx = 8
+                                                  RAINFALL_TOPIC,           // idx = 9
+                                                  DHT22_TEMP_TOPIC,         // idx = 10
+                                                  DHT22_HUMIDITY_TOPIC,     // idx = 11
+                                                  MEASUREMENTS_REPORT,      // idx = 12
                                                 };
                                                 
                                                 
