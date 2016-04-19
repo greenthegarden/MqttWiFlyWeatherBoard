@@ -48,6 +48,8 @@
   3.0 2015/04/24
     Modified to support SunAirPower measurements
     Moved MQTT topic strings to EEPROM to reduce SRAM usage
+  4.0 2016/04/19
+    Restructured code to improve maintence and align with more recent projects.
 */
 
 
@@ -75,14 +77,14 @@ void publish_measurements(void)
 }
 
 
-void publish_report()
+byte publish_report()
 {
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  if (!wiflyConnected)
-    wifly_connect();
+//  if (!wiflyConnected)
+  wifly_connect();  // always reconnect to network
 
   if (wiflyConnected) {
     // MQTT client setup
@@ -116,6 +118,10 @@ void publish_report()
       mqttClient.publish(progBuffer, messBuffer);
 
       mqttClient.disconnect();
+
+      return 1;
+    } else {
+      return 0;
     }
   }
 }

@@ -85,7 +85,7 @@ void wifly_configure()
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 }
 
-void wifly_connect()
+byte wifly_connect()
 {
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
@@ -96,12 +96,14 @@ void wifly_connect()
   if (!WiFly.join(SSID, PASSPHRASE, mode)) {
     wiflyConnected = false;
     wiflyFailedConnections++;
+    return 0;
   } else {
     wiflyConnected = true;
     wiflyFailedConnections = 0;
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
+    return 1;
   }
 }
 
