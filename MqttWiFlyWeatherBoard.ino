@@ -83,8 +83,8 @@ byte publish_report()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-//  if (!wiflyConnected)
-  wifly_connect();  // always reconnect to network
+  if (!wiflyConnected)
+    wifly_connect();
 
   if (wiflyConnected) {
     // MQTT client setup
@@ -118,6 +118,8 @@ byte publish_report()
       mqttClient.publish(progBuffer, messBuffer);
 
       mqttClient.disconnect();
+
+      wifly_disconnect();
 
       return 1;
     } else {
@@ -176,6 +178,8 @@ void setup()
 
   if (mqttClient.connected())
     mqttClient.disconnect();
+
+  wifly_disconnect();
 }
 /*--------------------------------------------------------------------------------------
  end setup()

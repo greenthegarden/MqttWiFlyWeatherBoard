@@ -55,7 +55,7 @@ factory RESET
 
 set wlan join 0    // Stop device connecting while we setup
 
-set ip dhcp 3
+set ip dhcp 1
 set wlan ssid xxx
 set wlan phrase xxx
 set wlan join 1
@@ -105,6 +105,21 @@ byte wifly_connect()
 #endif
     return 1;
   }
+}
+
+void wifly_disconnect()
+{
+  if (wiflyConnected) {
+    WiFly.leave();
+    wiflyConnected = false;
+  }
+}
+
+
+void wifly_sleep()
+{
+  wifly_disconnect();
+  WiFly.sleep();
 }
 
 
