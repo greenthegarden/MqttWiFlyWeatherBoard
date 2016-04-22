@@ -76,6 +76,7 @@ const byte WIFLY_FAILED_CONNECTIONS_MAX = 2;  // reset wifly after this many fai
 byte       wiflyFailedConnections       = 0;
 
 boolean wiflyConnected = false;
+boolean wiflyAsleep    = false;
 
 WiFlyClient wiflyClient;
 
@@ -120,6 +121,13 @@ void wifly_sleep()
 {
   wifly_disconnect();
   WiFly.sleep();
+  wiflyAsleep = true;
+}
+
+void wifly_wake()
+{
+  WiFly.wake();
+  wiflyAsleep = false;
 }
 
 

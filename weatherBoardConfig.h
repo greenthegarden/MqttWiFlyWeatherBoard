@@ -32,9 +32,9 @@
 
 
 // global variable definitions
-unsigned long previousMeasurementMillis = 0;
-unsigned long previousWindDirMillis     = 0;
-boolean       pressureSensorStatus      = false;
+unsigned long previousMeasurementMillis     = 0;
+unsigned long previousWindMeasurementMillis = 0;
+boolean       pressureSensorStatus          = false;
 
 // BMP085 status messages
 
@@ -267,11 +267,12 @@ const float WIND_RPM_TO_KNOTS  = WIND_RPM_TO_MPS / 1.943844492;
 //const float RAIN_BUCKETS_TO_INCHES = 0.014815;    // multiply bucket tips by this for inches
 const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by this for mm
 
-#if ENABLE_WIND_DIR_AVERAGING
+#if ENABLE_WIND_MEASUREMENT_AVERAGING
 #include "RunningAverage.h"
-byte WIND_DIR_AVERAGING_SIZE    = 10;
-unsigned long WIND_DIR_INTERVAL = 1000;
-RunningAverage wind_dir_avg(WIND_DIR_AVERAGING_SIZE);
+byte WIND_MEASUREMENT_AVERAGING_SIZE    = 10;
+unsigned long WIND_MEASUREMENT_INTERVAL = 1000;
+RunningAverage wind_spd_avg(WIND_MEASUREMENT_AVERAGING_SIZE);
+RunningAverage wind_dir_avg(WIND_MEASUREMENT_AVERAGING_SIZE);
 #endif
 
 
@@ -406,8 +407,10 @@ void weatherboard_meters_initialisation()
   windRpm         = 0;
   windIntCount    = 0;
 
-#if ENABLE_WIND_DIR_AVERAGING
-  wind_dir_avg.clear(); // explicitly start clean
+#if ENABLE_WIND_MEASUREMENT_AVERAGING
+// explicitly start clean
+  wind_spd_avg.clear();
+  wind_dir_avg.clear();
 #endif
 
   // attach external interrupt pins to IRQ functions
@@ -422,8 +425,12 @@ void publish_windspeed_measurement()
 {
   float windSpeedMeasurement = 0.0;
 
-  // publish instantaneous wind speed  
+  // publish instantaneous wind speed 
+#if ENABLE_WIND_MEASUREMENT_AVERAGING
+  windSpeedMeasurement = wind_spd_avg.getAverage();
+#else
   windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
+#endif
   buf[0] = '\0';
   dtostrf(windSpeedMeasurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
@@ -442,7 +449,7 @@ void publish_windspeed_measurement()
 byte publish_wind_direction_measurement()
 {
   float WM_wdirection = -1.0;
-#if ENABLE_WIND_DIR_AVERAGING
+#if ENABLE_WIND_MEASUREMENT_AVERAGING
   WM_wdirection = wind_dir_avg.getAverage();
 #else
   // use instantaneous wind direction
@@ -459,7 +466,6 @@ byte publish_wind_direction_measurement()
     return 0;
   }
 }
-
 
 void publish_rainfall_measurement()
 {

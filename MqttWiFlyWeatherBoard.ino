@@ -83,8 +83,13 @@ byte publish_report()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  if (!wiflyConnected)
+  if (wiflyAsleep) {
+    wifly_wake();
+  }
+  
+  if (!wiflyConnected) {
     wifly_connect();
+  }
 
   if (wiflyConnected) {
     // MQTT client setup
@@ -119,7 +124,8 @@ byte publish_report()
 
       mqttClient.disconnect();
 
-      wifly_disconnect();
+ //     wifly_disconnect();
+      wifly_sleep();
 
       return 1;
     } else {
@@ -201,9 +207,10 @@ void loop()
 #endif
   }
 
-#if ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING
-  if (currentMillis - previousWindDirMillis >= WIND_DIR_INTERVAL) {
-    previousWindDirMillis = currentMillis;
+#if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING
+  if (currentMillis - previousWindMeasurementMillis >= WIND_MEASUREMENT_INTERVAL) {
+    previousWindMeasurementMillis = currentMillis;
+    wind_spd_avg.addValue(windRpm);
     wind_dir_avg.addValue(get_wind_direction());
   }
 #endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
