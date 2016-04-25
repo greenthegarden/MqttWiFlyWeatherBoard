@@ -1,0 +1,219 @@
+import org.openhab.core.library.types.*
+//import org.openhab.core.library.items.*
+import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+
+
+import org.joda.time.*
+
+import java.lang.Math
+
+// required to add max/min dates and times
+// see https://github.com/openhab/openhab/wiki/Samples-Rules#how-to-display-the-minimum-and-maximum-values-of-an-item-in-a-given-period
+import java.util.Calendar
+import java.util.Date
+import java.util.TimeZone
+import java.text.SimpleDateFormat
+
+//var java.util.concurrent.locks.ReentrantLock lock = new java.util.concurrent.locks.ReentrantLock()
+
+rule "Startup Items"
+when
+	System started
+then
+	if (WeatherStationProcessedDayRainTotal == Uninitialized)
+		postUpdate(WeatherStationProcessedDayRainTotal, 0.0)
+	if (WeatherStationProcessedMonthRainTotal == Uninitialized)
+		postUpdate(WeatherStationProcessedMonthRainTotal, 0.0)
+	if (WeatherStationProcessedYearRainTotal == Uninitialized)
+		postUpdate(WeatherStationProcessedYearRainTotal, 0.0)
+end
+
+// Create items that stores the last update time of this item
+rule "Records last wifly connected"
+when
+	Item WeatherStationStatusWifly received update
+then
+	if (WeatherStationStatusWifly.state == "CONNECTED") {
+		postUpdate(WeatherStationProcessedLastConnect, new DateTimeType())
+	}
+end
+
+rule "Records last weather station update time"
+when
+	Item WeatherStationReportEnd received update
+then
+	postUpdate(WeatherStationProcessedLastUpdate, new DateTimeType())
+end
+
+// Define which sensor measurement temperature is based on
+rule "Set temperature"
+when
+	Item WeatherStationMeasurementSHT15Temp changed
+then
+	postUpdate(WeatherStationProcessedTemperature, WeatherStationMeasurementSHT15Temp.state)
+end
+
+// Define which sensor measurement humidity is based on
+rule "Set humidity"
+when
+	Item WeatherStationMeasurementSHT15Humidity changed
+then
+	postUpdate(WeatherStationProcessedHumidity, WeatherStationMeasurementSHT15Humidity.state)
+end
+
+// Define which sensor measurement pressure is based on
+rule "Set temperature"
+when
+	Item WeatherStationMeasurementBMP085Pressure changed
+then
+	postUpdate(WeatherStationProcessedPressure, WeatherStationMeasurementBMP085Pressure.state)
+end
+
+//rule "Temperature maxima and minima"
+//when
+//	Item WeatherStationProcessedTemperature changed or
+//	Time cron "0 0 0 * * ?" or
+//	System started
+//then
+//	// minima
+//	postUpdate(WeatherStationProcessedTemperatureDayMin, WeatherStationProcessedTemperature.minimumSince(now.withTimeAtStartOfDay, "mysql").state)
+//	// maxima
+//	postUpdate(WeatherStationProcessedTemperatureDayMax, WeatherStationProcessedTemperature.maximumSince(now.withTimeAtStartOfDay, "mysql").state)
+//end
+
+rule "Update Temperature Min- and Max formatted values"
+when
+    Item  WeatherStationProcessedTemperature changed
+then
+    var Number Min
+    var Number Max
+    var String tmp
+    var SimpleDateFormat df = new SimpleDateFormat( "HH:mm" ) 
+
+    if (WeatherStationProcessedTemperature.state instanceof DecimalType) {
+        Min = (WeatherStationProcessedTemperature.minimumSince(now.withTimeAtStartOfDay, "mysql").state as DecimalType)
+        postUpdate(WeatherStationProcessedTemperatureDayMin, Min)
+        tmp = (Math::round(Min.floatValue*10.0)/10.0) + " °C @ " + df.format(WeatherStationProcessedTemperature.minimumSince(now.withTimeAtStartOfDay, "mysql").timestamp)
+        postUpdate(WeatherStationProcessedTemperatureMinFormatted, tmp)
+
+        Max = WeatherStationProcessedTemperature.maximumSince(now.withTimeAtStartOfDay, "mysql").state as DecimalType
+		postUpdate(WeatherStationProcessedTemperatureDayMax, Max)
+        df = new SimpleDateFormat( "HH:mm" ) 
+        tmp = (Math::round(Max.floatValue*10.0)/10.0) + " °C @ " + df.format(WeatherStationProcessedTemperature.maximumSince(now.withTimeAtStartOfDay, "mysql").timestamp)
+        postUpdate(WeatherStationProcessedTemperatureMaxFormatted, tmp)
+    }
+end
+
+rule "Statistics Rain accumulation"
+when
+	Item WeatherStationMeasurementRain changed
+then
+	postUpdate(WeatherStationProcessedDayRainTotal, WeatherStationMeasurementRain.sumSince(now.withTimeAtStartOfDay))
+	postUpdate(WeatherStationProcessedMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.withDayOfMonth(1)))
+	postUpdate(WeatherStationProcessedYearRainTotal, WeatherStationMeasurementRain.sumSince(now.withMonthOfYear(1).withDayOfMonth(1)))
+	postUpdate(WeatherStationProcessedLast24HrsRainTotal, WeatherStationMeasurementRain.sumSince(now.minusHours(now.getHourOfDay)))
+	postUpdate(WeatherStationProcessedLastMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfMonth())))
+	postUpdate(WeatherStationProcessedLastYearRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfYear)))
+end
+
+// calculate dew point based on temperature and humidity
+rule "Dew Point Calculation"
+when
+	Item WeatherStationProcessedLastUpdate changed
+then
+    var Number dewpoint = 0.0
+    
+    val Number Tc = WeatherStationProcessedTemperature.state as DecimalType
+    val Number H = WeatherStationProcessedHumidity.state as DecimalType
+	
+	var Tn = 243.12
+	var m  = 17.62
+	if (Tc <= 0.0) {
+		Tn = 272.62
+		m  = 22.46
+	}
+	
+	dewpoint = (Tn*(Math::log((H/100.0).doubleValue)+((m*Tc)/(Tn+Tc)))/(m-Math::log((H/100.0).doubleValue)-((m*Tc)/(Tn+Tc))))
+	
+	postUpdate(WeatherStationProcessedDewPoint, dewpoint)
+end
+
+rule "Direction degrees to string"
+when
+  Item WeatherStationMeasurementWindDir changed
+then
+  var String dirString = ""
+  val Number dirMeasurement = WeatherStationMeasurementWindDir.state as DecimalType
+  if ((dirMeasurement>=348.75) && (dirMeasurement < 11.25))  {
+  	dirString="N"
+  } else if ((dirMeasurement>=11.25) && (dirMeasurement < 33.75)) {
+    dirString="NNE"
+  } else if ((dirMeasurement>=33.75) && (dirMeasurement < 56.25)) {
+    dirString="NE"
+  } else if ((dirMeasurement>=56.25) && (dirMeasurement < 78.75)) {
+    dirString="ENE"
+  } else if ((dirMeasurement>=78.75) && (dirMeasurement < 101.25)) {
+    dirString="E"
+  } else if ((dirMeasurement>=101.25) && (dirMeasurement < 123.75)) {
+    dirString="ESE"
+  } else if ((dirMeasurement>=123.75) && (dirMeasurement < 146.25)) {
+    dirString="SE"
+  } else if ((dirMeasurement>=146.25) && (dirMeasurement < 168.75)) {
+    dirString="SSE"
+  } else if ((dirMeasurement>=168.75) && (dirMeasurement < 191.25)) {
+    dirString="S"
+  } else if ((dirMeasurement>=191.25) && (dirMeasurement < 213.75)) {
+    dirString="SSW"
+  } else if ((dirMeasurement>=213.75) && (dirMeasurement < 236.25)) {
+    dirString="SW"
+  } else if ((dirMeasurement>=236.25) && (dirMeasurement < 258.75)) {
+    dirString="WSW"
+  } else if ((dirMeasurement>=258.75) && (dirMeasurement < 281.25)) {
+    dirString="W"
+  } else if ((dirMeasurement>=281.25) && (dirMeasurement < 303.75)) {
+    dirString="WNW"
+  } else if ((dirMeasurement>=303.75) && (dirMeasurement < 326.25)) {
+    dirString="NW"
+  } else if ((dirMeasurement>=326.25) && (dirMeasurement < 348.75)) {
+    dirString="NNW"
+  } else {
+   	dirString="ERROR"
+  }
+  postUpdate(WeatherStationProcessedWindDirString, dirString)
+end
+
+rule "SunAirPlus Battery Power Calculation"
+when
+	Item WeatherStationSunAirPlusBatteryVoltage received update or
+	Item WeatherStationSunAirPlusBatteryCurrent received update
+then
+	var Number voltage = WeatherStationSunAirPlusBatteryVoltage.state as DecimalType
+	var Number current = WeatherStationSunAirPlusBatteryCurrent.state as DecimalType
+	
+	postUpdate(WeatherStationSunAirPlusBatteryPower, voltage * current)
+end
+
+rule "SunAirPlus Solar Power Calculation"
+when
+	Item WeatherStationSunAirPlusSolarVoltage received update or
+	Item WeatherStationSunAirPlusSolarCurrent received update
+then
+	var Number voltage = WeatherStationSunAirPlusSolarVoltage.state as DecimalType
+	var Number current = WeatherStationSunAirPlusSolarCurrent.state as DecimalType
+	
+	postUpdate(WeatherStationSunAirPlusSolarPower, voltage * current)
+end
+
+rule "SunAirPlus Output Power Calculation"
+when
+	Item WeatherStationSunAirPlusOutputVoltage received update or
+	Item WeatherStationSunAirPlusOutputCurrent received update
+then
+	var Number voltage = WeatherStationSunAirPlusOutputVoltage.state as DecimalType
+	var Number current = WeatherStationSunAirPlusOutputCurrent.state as DecimalType
+	
+	postUpdate(WeatherStationSunAirPlusOutputPower, voltage * current)
+end
+
+	

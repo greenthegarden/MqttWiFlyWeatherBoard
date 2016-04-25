@@ -1,0 +1,70 @@
+sitemap homeWeatherStation label="Home Weather Station"
+{
+//	Frame label="Measurements" {
+////		Group item=gWeatherStationMeasurements label="Measurements"
+//		Text item=WeatherStationMeasurementSHT15Temp valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationMeasurementDHT22Temp valuecolor=[>25="red",>20="orange",>15="green",<15="blue"] visibility=[WeatherStationStatusDht22=="OK"]
+//		Text item=WeatherStationMeasurementBMP085Temp  valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationMeasurementSHT15Humidity valuecolor=[>85="red",>60="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationMeasurementDHT22Humidity valuecolor=[>85="red",>60="orange",>15="green",<15="blue"] visibility=[WeatherStationStatusDht22=="OK"]
+//		Text item=WeatherStationMeasurementBMP085Pressure
+//		Text item=WeatherStationMeasurementTEMT6000Light valuecolor=[>=50="yellow",>15="grey",<15="black"]
+//		Text item=WeatherStationMeasurementWindSpd valuecolor=[>=50="red",>15="grey",<15="black"]  visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationMeasurementWindSpdMax valuecolor=[>=50="red",>15="grey",<15="black"] visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationMeasurementWindDir visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationMeasurementRain visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//	}
+//	Frame label="Processed Data" {
+////		Group item=gWeatherStationMeasurements label="Measurements"
+//		Text item=WeatherStationProcessedTemperature valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationProcessedTemperatureDayMin valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationProcessedTemperatureDayMax valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationProcessedTemperatureMinFormatted
+//		Text item=WeatherStationProcessedTemperatureMaxFormatted
+//		Text item=WeatherStationProcessedHumidity valuecolor=[>85="red",>60="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationProcessedDewPoint valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+//		Text item=WeatherStationProcessedWindDirString visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedDayRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedMonthRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedYearRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedLast24HrsRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedLastMonthRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//		Text item=WeatherStationProcessedLastYearRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+//	}
+	Frame label="Latest Observation" {
+		Text item=WeatherStationProcessedLastUpdate valuecolor=[WeatherStationProcessedLastUpdate=="Uninitialized"="lightgray",WeatherStationLastUpdate>300="red",>180="darkgray",<=180="black"]
+		Text item=WeatherStationProcessedTemperature valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+		Text item=WeatherStationProcessedHumidity valuecolor=[>85="red",>60="orange",>15="green",<15="blue"]
+		Text item=WeatherStationProcessedPressure
+		Text item=WeatherStationProcessedDewPoint valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
+		Text item=WeatherStationProcessedWindDirString visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+		Text item=WeatherStationMeasurementWindSpd valuecolor=[>=50="red",>15="grey",<15="black"]  visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+		Text item=WeatherStationMeasurementWindSpdMax valuecolor=[>=50="red",>15="grey",<15="black"] visibility=[WeatherStationStatusWeatherMeters!="ERROR"]	
+	}
+	Frame label="Daily Summary" {
+		Text item=WeatherStationProcessedTemperatureMinFormatted
+		Text item=WeatherStationProcessedTemperatureMaxFormatted
+		Chart item=WeatherStationProcessedTemperature period=D refresh=30000
+	}
+	Frame label="Status" {
+		// last update values for colours in seconds
+		Text item=WeatherStationProcessedLastConnect valuecolor=[WeatherStationProcessedLastUpdate=="Uninitialized"="lightgray",WeatherStationLastUpdate>300="red",>180="darkgray",<=180="black"]
+		Switch item=WeatherStationWiflyNetworkStatus
+		Group item=gWeatherStationSunAirPlus label="Power" {
+			Frame label="Voltages" {
+				Text item=WeatherStationSunAirPlusBatteryVoltage
+				Text item=WeatherStationSunAirPlusSolarVoltage     
+				Text item=WeatherStationSunAirPlusOutputVoltage    
+				Chart item=gWeatherStationSunAirPlusVoltageChart label="Voltages" period=D refresh=30000
+			}
+			Frame label="Power" {
+				Text item=WeatherStationSunAirPlusBatteryPower   
+				Text item=WeatherStationSunAirPlusSolarPower     
+				Text item=WeatherStationSunAirPlusOutputPower
+				Chart item=gWeatherStationSunAirPlusPowerChart label="Power" period=D refresh=30000
+			}
+		}
+		Group item=gWeatherStationStatus label="Status"
+	}
+}
+

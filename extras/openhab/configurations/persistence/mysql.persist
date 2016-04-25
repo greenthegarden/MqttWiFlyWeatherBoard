@@ -1,0 +1,17 @@
+// persistence strategies have a name and a definition and are referred to in the "Items" section
+Strategies {
+	everyMinute : "0 * * * * ?"
+	everyHour : "0 0 * * * ?"
+    everyDay  : "0 0 0 * * ?"
+
+    // if no strategy is specified for an item entry below, the default list will be used
+    default = everyChange
+}
+
+Items {
+	// add items wanted for long-term retrieval
+//	WeatherStationProcessedTemperature : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
+	gWeatherStationSql* : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
+	gemonPiSql* : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
+//	gSql* : strategy = everyChange, everyHour, everyDay, restoreOnStartup
+}
