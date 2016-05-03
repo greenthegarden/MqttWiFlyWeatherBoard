@@ -176,6 +176,9 @@ void setup()
 
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_initialisation();
+
+  // turn on interrupts
+  interrupts();
 #endif
 
 #if ENABLE_POWER_MONITOR

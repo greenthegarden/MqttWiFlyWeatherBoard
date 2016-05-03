@@ -396,14 +396,14 @@ void weatherboard_meters_initialisation()
   // publish an error if not connected
   weatherboard_meters_connected();
   
-  pinMode(WSPEED,INPUT);               // input from wind meters windspeed sensor
-  digitalWrite(WSPEED,HIGH);           // turn on pullup
+  pinMode(WSPEED, INPUT);              // input from wind meters windspeed sensor
+  digitalWrite(WSPEED, HIGH);          // turn on pullup
 
-  pinMode(RAIN,INPUT);                 // input from wind meters rain gauge sensor
-  digitalWrite(RAIN,HIGH);             // turn on pullup
+  pinMode(RAIN, INPUT);                // input from wind meters rain gauge sensor
+  digitalWrite(RAIN, HIGH);            // turn on pullup
 
   // init wind speed interrupt global variables
-  gotWindSpeed       = false;
+  gotWindSpeed    = false;
   windRpm         = 0;
   windIntCount    = 0;
 
@@ -414,17 +414,13 @@ void weatherboard_meters_initialisation()
 #endif
 
   // attach external interrupt pins to IRQ functions
-  attachInterrupt(0, rain_irq,   FALLING);
+  attachInterrupt(0, rain_irq,       FALLING);
   attachInterrupt(1, wind_speed_irq, FALLING);
-
-  // turn on interrupts
-  interrupts();
 }
 
 void publish_windspeed_measurement()
 {
   float windSpeedMeasurement = 0.0;
-
   // publish instantaneous wind speed 
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
   windSpeedMeasurement = wind_spd_avg.getAverage();
