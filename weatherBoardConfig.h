@@ -420,7 +420,7 @@ void weatherboard_meters_initialisation()
 
 void publish_windspeed_measurement()
 {
-  float windSpeedMeasurement = 0.0;
+  float windSpeedMeasurement = -1.0;  // this value should never be published
   // publish instantaneous wind speed 
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
   windSpeedMeasurement = wind_spd_avg.getAverage();
