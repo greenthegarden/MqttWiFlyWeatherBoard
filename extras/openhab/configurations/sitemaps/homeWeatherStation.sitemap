@@ -40,6 +40,7 @@ sitemap homeWeatherStation label="Home Weather Station"
 		Text item=WeatherStationProcessedWindDirString visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
 		Text item=WeatherStationMeasurementWindSpd valuecolor=[>=50="red",>15="grey",<15="black"]  visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
 		Text item=WeatherStationMeasurementWindSpdMax valuecolor=[>=50="red",>15="grey",<15="black"] visibility=[WeatherStationStatusWeatherMeters!="ERROR"]	
+		Text item=WeatherStationProcessedDayRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
 	}
 	Frame label="Daily Summary" {
 		Text item=WeatherStationProcessedTemperatureMinFormatted
@@ -64,7 +65,16 @@ sitemap homeWeatherStation label="Home Weather Station"
 				Chart item=gWeatherStationSunAirPlusPowerChart label="Power" period=D refresh=30000
 			}
 		}
-		Group item=gWeatherStationStatus label="Status"
+		Group item=gWeatherStationStatus label="Status" {
+			Frame label="Status" {
+				Text item=WeatherStationStatusWifly
+				Text item=WeatherStationStatusBmp085     
+				Text item=WeatherStationStatusWeatherMeters
+				Text item=WeatherStationStatusDht22
+				Text item=WeatherStationProcessedLastConnect
+				Text item=WeatherStationProcessedLastUpdate
+			}
+		}
 	}
 }
 

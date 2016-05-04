@@ -46,6 +46,7 @@ then
 	postUpdate(WeatherStationProcessedLastUpdate, new DateTimeType())
 end
 
+
 // Define which sensor measurement temperature is based on
 rule "Set temperature"
 when
@@ -110,11 +111,11 @@ when
 	Item WeatherStationMeasurementRain changed
 then
 	postUpdate(WeatherStationProcessedDayRainTotal, WeatherStationMeasurementRain.sumSince(now.withTimeAtStartOfDay))
-	postUpdate(WeatherStationProcessedMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.withDayOfMonth(1)))
-	postUpdate(WeatherStationProcessedYearRainTotal, WeatherStationMeasurementRain.sumSince(now.withMonthOfYear(1).withDayOfMonth(1)))
-	postUpdate(WeatherStationProcessedLast24HrsRainTotal, WeatherStationMeasurementRain.sumSince(now.minusHours(now.getHourOfDay)))
-	postUpdate(WeatherStationProcessedLastMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfMonth())))
-	postUpdate(WeatherStationProcessedLastYearRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfYear)))
+//	postUpdate(WeatherStationProcessedMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.withDayOfMonth(1)))
+//	postUpdate(WeatherStationProcessedYearRainTotal, WeatherStationMeasurementRain.sumSince(now.withMonthOfYear(1).withDayOfMonth(1)))
+//	postUpdate(WeatherStationProcessedLast24HrsRainTotal, WeatherStationMeasurementRain.sumSince(now.minusHours(now.getHourOfDay)))
+//	postUpdate(WeatherStationProcessedLastMonthRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfMonth())))
+//	postUpdate(WeatherStationProcessedLastYearRainTotal, WeatherStationMeasurementRain.sumSince(now.minusDays(now.getDayOfYear)))
 end
 
 // calculate dew point based on temperature and humidity
@@ -141,44 +142,53 @@ end
 
 rule "Direction degrees to string"
 when
-  Item WeatherStationMeasurementWindDir changed
+  Item WeatherStationMeasurementWindDir changed or
+  Item WeatherStationMeasurementWindSpd changed or
+  Item WeatherStationMeasurementWindSpdMax changed
 then
   var String dirString = ""
   val Number dirMeasurement = WeatherStationMeasurementWindDir.state as DecimalType
-  if ((dirMeasurement>=348.75) && (dirMeasurement < 11.25))  {
-  	dirString="N"
-  } else if ((dirMeasurement>=11.25) && (dirMeasurement < 33.75)) {
-    dirString="NNE"
-  } else if ((dirMeasurement>=33.75) && (dirMeasurement < 56.25)) {
-    dirString="NE"
-  } else if ((dirMeasurement>=56.25) && (dirMeasurement < 78.75)) {
-    dirString="ENE"
-  } else if ((dirMeasurement>=78.75) && (dirMeasurement < 101.25)) {
-    dirString="E"
-  } else if ((dirMeasurement>=101.25) && (dirMeasurement < 123.75)) {
-    dirString="ESE"
-  } else if ((dirMeasurement>=123.75) && (dirMeasurement < 146.25)) {
-    dirString="SE"
-  } else if ((dirMeasurement>=146.25) && (dirMeasurement < 168.75)) {
-    dirString="SSE"
-  } else if ((dirMeasurement>=168.75) && (dirMeasurement < 191.25)) {
-    dirString="S"
-  } else if ((dirMeasurement>=191.25) && (dirMeasurement < 213.75)) {
-    dirString="SSW"
-  } else if ((dirMeasurement>=213.75) && (dirMeasurement < 236.25)) {
-    dirString="SW"
-  } else if ((dirMeasurement>=236.25) && (dirMeasurement < 258.75)) {
-    dirString="WSW"
-  } else if ((dirMeasurement>=258.75) && (dirMeasurement < 281.25)) {
-    dirString="W"
-  } else if ((dirMeasurement>=281.25) && (dirMeasurement < 303.75)) {
-    dirString="WNW"
-  } else if ((dirMeasurement>=303.75) && (dirMeasurement < 326.25)) {
-    dirString="NW"
-  } else if ((dirMeasurement>=326.25) && (dirMeasurement < 348.75)) {
-    dirString="NNW"
-  } else {
-   	dirString="ERROR"
+  val Number windSpd        = WeatherStationMeasurementWindSpd.state as DecimalType
+  val Number windSpdMax     = WeatherStationMeasurementWindSpdMax.state as DecimalType
+  if ((windSpd>0) || (windSpdMax>0)) {
+	  if ((dirMeasurement>=348.75) && (dirMeasurement < 11.25))  {
+	  	dirString="N"
+	  } else if ((dirMeasurement>=11.25) && (dirMeasurement < 33.75)) {
+	    dirString="NNE"
+	  } else if ((dirMeasurement>=33.75) && (dirMeasurement < 56.25)) {
+	    dirString="NE"
+	  } else if ((dirMeasurement>=56.25) && (dirMeasurement < 78.75)) {
+	    dirString="ENE"
+	  } else if ((dirMeasurement>=78.75) && (dirMeasurement < 101.25)) {
+	    dirString="E"
+	  } else if ((dirMeasurement>=101.25) && (dirMeasurement < 123.75)) {
+	    dirString="ESE"
+	  } else if ((dirMeasurement>=123.75) && (dirMeasurement < 146.25)) {
+	    dirString="SE"
+	  } else if ((dirMeasurement>=146.25) && (dirMeasurement < 168.75)) {
+	    dirString="SSE"
+	  } else if ((dirMeasurement>=168.75) && (dirMeasurement < 191.25)) {
+	    dirString="S"
+	  } else if ((dirMeasurement>=191.25) && (dirMeasurement < 213.75)) {
+	    dirString="SSW"
+	  } else if ((dirMeasurement>=213.75) && (dirMeasurement < 236.25)) {
+	    dirString="SW"
+	  } else if ((dirMeasurement>=236.25) && (dirMeasurement < 258.75)) {
+	    dirString="WSW"
+	  } else if ((dirMeasurement>=258.75) && (dirMeasurement < 281.25)) {
+	    dirString="W"
+	  } else if ((dirMeasurement>=281.25) && (dirMeasurement < 303.75)) {
+	    dirString="WNW"
+	  } else if ((dirMeasurement>=303.75) && (dirMeasurement < 326.25)) {
+	    dirString="NW"
+	  } else if ((dirMeasurement>=326.25) && (dirMeasurement < 348.75)) {
+	    dirString="NNW"
+	  } else {
+	   	dirString="ERROR"
+	  }
+  }
+  else {
+  	dirString="CALM"
   }
   postUpdate(WeatherStationProcessedWindDirString, dirString)
 end

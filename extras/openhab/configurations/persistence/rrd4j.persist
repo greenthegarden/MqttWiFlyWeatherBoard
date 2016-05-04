@@ -19,4 +19,7 @@ Items {
 	TemperatureChart*, WdgAdelaideTemperature : strategy = everyMinute
 	sunDuration : strategy = everyMinute
 	WeatherStationProcessedTemperature : strategy = everyMinute
+	gWeatherStationSunAirPlusVoltageChart*, gWeatherStationSunAirPlusPowerChart* : strategy = everyMinute
+	WeatherStationSunAirPlusBatteryVoltage, WeatherStationSunAirPlusSolarVoltage, WeatherStationSunAirPlusOutputVoltage : strategy = everyMinute
+	WeatherStationSunAirPlusBatteryPower, WeatherStationSunAirPlusSolarPower, WeatherStationSunAirPlusOutputPower : strategy = everyMinute
 }
