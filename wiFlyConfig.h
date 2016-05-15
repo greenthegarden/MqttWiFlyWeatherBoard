@@ -103,12 +103,14 @@ byte wifly_connect()
   }
 }
 
-void wifly_disconnect()
+byte wifly_disconnect()
 {
   if (wiflyConnected) {
     WiFly.leave();
     wiflyConnected = false;
+    return 1;
   }
+  return 0;
 }
 
 void wifly_sleep()
