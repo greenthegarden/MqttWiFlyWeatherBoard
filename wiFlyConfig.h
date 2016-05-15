@@ -111,24 +111,15 @@ void wifly_disconnect()
   }
 }
 
-void wifly_set_sleep_timer(int seconds)
-{
-  wifly_disconnect();
-  WiFly.setSleepTimer(seconds);
-}
-
-void wifly_set_wake_timer(int seconds)
-{
-  WiFly.setWakeTimer(seconds);
-}
-
 void wifly_sleep()
 {
+  wifly_disconnect();
+  
   DEBUG_LOG(1, "WiFly: setting sleep timer");
-  wifly_set_sleep_timer(10);
+  WiFly.setSleepTimer(10);
 
   DEBUG_LOG(1, "WiFly: setting wake timer");
-  wifly_set_wake_timer(MEASUREMENT_INTERVAL_SECS - 20);
+  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - 20);
 }
 
 
