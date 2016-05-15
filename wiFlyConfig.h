@@ -93,7 +93,6 @@ byte wifly_connect()
 
   if (!WiFly.join(SSID, PASSPHRASE, mode)) {
     wiflyConnected = false;
-    return 0;
   } else {
     wiflyConnected = true;
 #if USE_STATUS_LED
@@ -101,6 +100,7 @@ byte wifly_connect()
 #endif
     return 1;
   }
+  return 0;
 }
 
 byte wifly_disconnect()
