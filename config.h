@@ -20,8 +20,13 @@ char buf[12];
 const int BAUD_RATE             = 9600;
 
 // program constants
-const unsigned long MEASUREMENT_INTERVAL =  5UL * 60UL * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
-const unsigned long AFTER_ERROR_DELAY    = 60UL * 1000UL;
+const unsigned long MEASUREMENT_INTERVAL_SECS = 5UL * 60UL;
+const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
+const unsigned long AFTER_ERROR_DELAY         = 60UL * 1000UL;
+
+// global variable definitions
+unsigned long previousMeasurementMillis     = 0;
+unsigned long previousWindMeasurementMillis = 0;
 
 
 #include "wiFlyConfig.h"

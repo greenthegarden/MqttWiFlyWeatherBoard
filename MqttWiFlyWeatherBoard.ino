@@ -13,7 +13,8 @@
 
 /*
   To compile Set Tools/Board in the Arduino IDE to
-  "Arduino Pro or Pro Mini (3.3V 8MHz) w/ ATmega328"
+  Board: "Arduino Pro or Pro Mini"
+  Processor: ATmega328 (3.3V 8MHz)"
 
   While uploading to code to the Weather Board, remove the WiFly module and
   ensure the Comm switch is set to 'USB'
@@ -50,6 +51,8 @@
     Moved MQTT topic strings to EEPROM to reduce SRAM usage
   4.0 2016/04/19
     Restructured code to improve maintence and align with more recent projects.
+  5.0 2016/05/15
+    Added capability to 'sleep' WiFLy module 
 */
 
 
@@ -82,10 +85,6 @@ byte publish_report()
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
-
-  if (wiflyAsleep) {
-    wifly_wake();
-  }
   
   if (!wiflyConnected) {
     wifly_connect();
@@ -124,9 +123,6 @@ byte publish_report()
 
       mqttClient.disconnect();
 
- //     wifly_disconnect();
-      wifly_sleep();
-
       return 1;
     } else {
       return 0;
@@ -147,12 +143,11 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  // lots of time for the WiFly to start up
-  delay(5000);
-
   // Configure WiFly
+  DEBUG_LOG(1, "configuring WiFly ...");
   wifly_configure();
 
+  DEBUG_LOG(1, "connecting WiFly ...");
   wifly_connect();
 
 #if USE_STATUS_LED
@@ -188,7 +183,7 @@ void setup()
   if (mqttClient.connected())
     mqttClient.disconnect();
 
-  wifly_disconnect();
+  wifly_sleep();
 }
 /*--------------------------------------------------------------------------------------
  end setup()
@@ -205,6 +200,7 @@ void loop()
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
     publish_report();
+    wifly_sleep();
 #if ENABLE_WEATHER_METERS
     windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
 #endif
@@ -217,11 +213,6 @@ void loop()
     wind_dir_avg.addValue(get_wind_direction());
   }
 #endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
-
-  if (wiflyFailedConnections > WIFLY_FAILED_CONNECTIONS_MAX) {
-    delay(AFTER_ERROR_DELAY);
-    wiflyFailedConnections = 0;
-  }
 
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts

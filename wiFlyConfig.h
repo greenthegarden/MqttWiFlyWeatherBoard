@@ -72,16 +72,13 @@ reboot
 
 #include "networkConfig.h"
 
-const byte WIFLY_FAILED_CONNECTIONS_MAX = 2;  // reset wifly after this many failed connections
-byte       wiflyFailedConnections       = 0;
-
 boolean wiflyConnected = false;
-boolean wiflyAsleep    = false;
 
 WiFlyClient wiflyClient;
 
 void wifly_configure()
 {
+  delay(5000);                  // lots of time for the WiFly to start up
   Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 }
@@ -96,11 +93,9 @@ byte wifly_connect()
 
   if (!WiFly.join(SSID, PASSPHRASE, mode)) {
     wiflyConnected = false;
-    wiflyFailedConnections++;
     return 0;
   } else {
     wiflyConnected = true;
-    wiflyFailedConnections = 0;
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
@@ -116,18 +111,24 @@ void wifly_disconnect()
   }
 }
 
+void wifly_set_sleep_timer(int seconds)
+{
+  wifly_disconnect();
+  WiFly.setSleepTimer(seconds);
+}
+
+void wifly_set_wake_timer(int seconds)
+{
+  WiFly.setWakeTimer(seconds);
+}
 
 void wifly_sleep()
 {
-  wifly_disconnect();
-  WiFly.sleep();
-  wiflyAsleep = true;
-}
+  DEBUG_LOG(1, "WiFly: setting sleep timer");
+  wifly_set_sleep_timer(10);
 
-void wifly_wake()
-{
-  WiFly.wake();
-  wiflyAsleep = false;
+  DEBUG_LOG(1, "WiFly: setting wake timer");
+  wifly_set_wake_timer(MEASUREMENT_INTERVAL_SECS - 20);
 }
 
 

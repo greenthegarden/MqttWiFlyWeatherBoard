@@ -30,10 +30,7 @@
 #define   BATT_LVL     A6
 #define   LIGHT        A7
 
-
 // global variable definitions
-unsigned long previousMeasurementMillis     = 0;
-unsigned long previousWindMeasurementMillis = 0;
 boolean       pressureSensorStatus          = false;
 
 // BMP085 status messages
