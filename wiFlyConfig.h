@@ -78,7 +78,6 @@ WiFlyClient wiflyClient;
 
 void wifly_configure()
 {
-  delay(5000);                  // lots of time for the WiFly to start up
   Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 }
@@ -89,12 +88,19 @@ byte wifly_connect()
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
+  DEBUG_LOG(1, "initialising wifly");
+
   WiFly.begin();
+  delay(5000);  // time for WiFly to start
+
+  DEBUG_LOG(1, "joining network");
 
   if (!WiFly.join(SSID, PASSPHRASE, mode)) {
     wiflyConnected = false;
+    DEBUG_LOG(1, "  connection failed");
   } else {
     wiflyConnected = true;
+    DEBUG_LOG(1, "  connected");
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
