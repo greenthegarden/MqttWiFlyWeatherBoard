@@ -94,5 +94,5 @@ void publish_dht22_measurements()
 }
 
 
-#endif  /* MQTTWIFLYWEATHERBOARD_MQTTCONFIG_H_ */
+#endif  /* MQTTWIFLYWEATHERBOARD_DHT22CONFIG_H_ */
 

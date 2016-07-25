@@ -34,8 +34,8 @@ unsigned long previousWindMeasurementMillis = 0;
 
 
 // Define use of weather board sensors
-#define ENABLE_WEATHER_METERS     true
-#define ENABLE_WIND_DIR_AVERAGING true
+#define ENABLE_WEATHER_METERS     false
+#define ENABLE_WIND_DIR_AVERAGING false
 #define ENABLE_EXTERNAL_LIGHT     true
 
 #include "weatherBoardConfig.h"

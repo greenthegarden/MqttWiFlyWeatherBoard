@@ -66,9 +66,6 @@ void publish_measurements(void)
   if (pressureSensorStatus) { publish_bmp085_measurements(); }
   publish_temt6000_measurement();
 #if ENABLE_WEATHER_METERS
-//  windspeed_measurement();
-//  winddirection_measurement();
-//  rainfall_measurement();
   publish_weather_meter_measurement();
 #endif
 #if ENABLE_DHT22
@@ -130,6 +127,13 @@ byte publish_report()
   }
 }
 
+void reset_cummulative_measurements()
+{
+#if ENABLE_WEATHER_METERS
+  windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
+#endif
+}
+
 
 /*--------------------------------------------------------------------------------------
  setup()
@@ -180,9 +184,11 @@ void setup()
   ina3221.begin();
 #endif
 
-  if (mqttClient.connected())
-    mqttClient.disconnect();
-
+  if (wiflyConnected) {
+    if (mqttClient.connected())
+      mqttClient.disconnect();
+  }
+  
   wifly_sleep();
 }
 /*--------------------------------------------------------------------------------------
@@ -201,9 +207,7 @@ void loop()
     previousMeasurementMillis = currentMillis;
     publish_report();
     wifly_sleep();
-#if ENABLE_WEATHER_METERS
-    windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
-#endif
+    reset_cummulative_measurements();
   }
 
 #if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING
