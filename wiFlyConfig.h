@@ -119,15 +119,18 @@ byte wifly_disconnect()
   return 0;
 }
 
+const unsigned long SLEEP_TIMER_DELAY_SECS = 10UL;  // seconds delay to sleep WiFly
+const unsigned long WAKE_TIMER_DELTA_SECS  = 20UL;  // seconds early to wake WiFly
+
 void wifly_sleep()
 {
   wifly_disconnect();
   
   DEBUG_LOG(1, "WiFly: setting sleep timer");
-  WiFly.setSleepTimer(10);
+  WiFly.setSleepTimer(SLEEP_TIMER_DELAY_SECS);
 
   DEBUG_LOG(1, "WiFly: setting wake timer");
-  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - 20);
+  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
 }
 
 

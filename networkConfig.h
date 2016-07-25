@@ -3,8 +3,8 @@
 
 
 // Wifi parameters
-const char SSID[]             = "videoAtHome";
-const char PASSPHRASE[]       = "Cambridge&";
+const char SSID[]             = "videoAtHome-2.4g";
+const char PASSPHRASE[]       = "C@mbridge&";
 boolean    mode               = true; //or WEP_MODE
 
 

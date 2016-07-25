@@ -6,7 +6,7 @@
 
 
 // MQTT parameters
-IPAddress mqttServerAddr(192, 168, 1, 55);    // Pi
+IPAddress mqttServerAddr(192, 168, 1, 50);    // openHAB
 char mqttClientId[]           = "weather";
 const int MQTT_PORT           = 1883;
 //#define MQTT_MAX_PACKET_SIZE  168
@@ -47,11 +47,13 @@ const char MQTT_PAYLOAD_CONNECTED[]   PROGMEM = "CONNECTED";
 const char MQTT_PAYLOAD_ERROR[]       PROGMEM = "ERROR";
 const char MQTT_PAYLOAD_START[]       PROGMEM = "START";
 const char MQTT_PAYLOAD_END[]         PROGMEM = "END";
+const char MQTT_PAYLOAD_SLEEP[]       PROGMEM = "SLEEP";
 
 PGM_P const MQTT_PAYLOADS[]           PROGMEM = { MQTT_PAYLOAD_CONNECTED,   // idx = 0
                                                   MQTT_PAYLOAD_ERROR,       // idx = 1
                                                   MQTT_PAYLOAD_START,       // idx = 2
                                                   MQTT_PAYLOAD_END,         // idx = 3
+                                                  MQTT_PAYLOAD_SLEEP,       // idx = 4
                                                 };
 
 
