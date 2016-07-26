@@ -147,6 +147,8 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
+  wdt_enable(WDTO_8S);
+  
   // Configure WiFly
   DEBUG_LOG(1, "configuring WiFly ...");
   wifly_configure();
@@ -190,6 +192,8 @@ void setup()
   }
   
   wifly_sleep();
+
+  wdt_reset();
 }
 /*--------------------------------------------------------------------------------------
  end setup()
@@ -200,7 +204,7 @@ void setup()
  Arduino main loop
  --------------------------------------------------------------------------------------*/
 void loop()
-{
+{  
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
@@ -238,6 +242,8 @@ void loop()
     windIntCount = 0;
   }
 #endif  // ENABLE_WEATHER_METERS
+
+  wdt_reset();  // reset watchdog timer
 }
 /*--------------------------------------------------------------------------------------
  end loop()

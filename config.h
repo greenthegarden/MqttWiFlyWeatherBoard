@@ -6,6 +6,7 @@
 
 #include "debug.h"
 
+#include "watchdogConfig.h"
 
 const byte BUFFER_SIZE          = 42;
 char progBuffer[BUFFER_SIZE];

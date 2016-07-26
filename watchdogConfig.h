@@ -2,26 +2,9 @@
 #define MQTTWIFLYWEATHERBOARD_WATCHDOGCONFIG_H_
 
 
-#define USE_HARDWARE_WATCHDOG       false
+#include <avr/wdt.h>
 
-
-#if USE_HARDWARE_WATCHDOG
-
-const int RESET_WATCHDOG1         = 10;
-unsigned long previousMillis      = 0;              // will store last time LED was updated
-const long watchdog_interval      = 60UL * 1000UL;  // interval at which to blink (milliseconds)
-
-void ResetWatchdog1()
-{
- pinMode(RESET_WATCHDOG1, OUTPUT);
- delay(200);
- pinMode(RESET_WATCHDOG1, INPUT);
-#if DEBUG
- Serial.println("Watchdog1 Reset");
-#endif
-}
-
-#endif
+//wdt_enable(WDTO_2S);
 
 
 #endif  /* MQTTWIFLYWEATHERBOARD_WATCHDOGCONFIG_H_ */
