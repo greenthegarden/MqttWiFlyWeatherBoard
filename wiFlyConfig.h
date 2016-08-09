@@ -91,7 +91,9 @@ byte wifly_connect()
   DEBUG_LOG(1, "initialising wifly");
 
   WiFly.begin();
-  delay(5000);  // time for WiFly to start
+//  delay(5000);  // time for WiFly to start
+
+  wdt_reset();  // reset watchdog timer
 
   DEBUG_LOG(1, "joining network");
 
@@ -104,8 +106,10 @@ byte wifly_connect()
 #if USE_STATUS_LED
     digitalWrite(STATUS_LED, LOW);
 #endif
+    wdt_reset();  // reset watchdog timer
     return 1;
   }
+  wdt_reset();  // reset watchdog timer
   return 0;
 }
 
@@ -114,23 +118,48 @@ byte wifly_disconnect()
   if (wiflyConnected) {
     WiFly.leave();
     wiflyConnected = false;
+    wdt_reset();  // reset watchdog timer
     return 1;
   }
   return 0;
 }
 
-const unsigned long SLEEP_TIMER_DELAY_SECS = 10UL;  // seconds delay to sleep WiFly
+const unsigned long SLEEP_TIMER_DELAY_SECS = 5UL;  // seconds delay to sleep WiFly
 const unsigned long WAKE_TIMER_DELTA_SECS  = 20UL;  // seconds early to wake WiFly
+
+void wifly_configure_sleep()
+{
+  /*
+   * sets the automatic wake timer, where <value> is a decimal number
+   * representing the number of seconds after which the module wakes from sleep.
+   * Setting <value> to 0 disables.
+   */
+  DEBUG_LOG(1, "WiFly: setting wake timer");
+  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
+
+  /*
+   * Sets the sleep timer, where <value> is a decimal number.
+   * The sleep timer is the time (in seconds) after which the module goes to sleep.
+   * This timer is dis- abled during an open TCP connection.
+   * When the TCP connection is closed, the module counts down and puts the module to sleep after <value> seconds.
+   * Setting the value to 0 disables the sleep timer, and the module will not go to sleep based on this counter.
+   */
+   
+  /* 
+   *  Note: Be sure to set the wake timer before issuing the sleep timer if you are not using an external wake up signal;
+   *  otherwise, the module will never wake up.
+   */
+//  DEBUG_LOG(1, "WiFly: setting sleep timer");
+//  WiFly.setSleepTimer(SLEEP_TIMER_DELAY_SECS);
+}
+
 
 void wifly_sleep()
 {
+  // close tcp connection
   wifly_disconnect();
-  
-  DEBUG_LOG(1, "WiFly: setting sleep timer");
-  WiFly.setSleepTimer(SLEEP_TIMER_DELAY_SECS);
 
-  DEBUG_LOG(1, "WiFly: setting wake timer");
-  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
+  WiFly.sleep();
 }
 
 

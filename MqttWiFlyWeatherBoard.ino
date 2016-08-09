@@ -74,6 +74,7 @@ void publish_measurements(void)
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement();
 #endif
+  wdt_reset();  // reset watchdog timer
 }
 
 
@@ -118,7 +119,9 @@ byte publish_report()
       strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
       mqttClient.publish(progBuffer, messBuffer);
 
-      mqttClient.disconnect();
+      mqttClient.disconnect();  // should stop tcp connection
+
+      wdt_reset();  // reset watchdog timer
 
       return 1;
     } else {
@@ -147,8 +150,6 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  wdt_enable(WDTO_8S);
-  
   // Configure WiFly
   DEBUG_LOG(1, "configuring WiFly ...");
   wifly_configure();
@@ -186,14 +187,16 @@ void setup()
   ina3221.begin();
 #endif
 
+  wifly_configure_sleep();
+
   if (wiflyConnected) {
     if (mqttClient.connected())
       mqttClient.disconnect();
   }
-  
-  wifly_sleep();
 
-  wdt_reset();
+  wifly_sleep();
+  
+  wdt_enable(WDTO_8S);    // enable watchdog timer
 }
 /*--------------------------------------------------------------------------------------
  end setup()
