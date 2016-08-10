@@ -1,4 +1,4 @@
-sitemap homeWeatherStation label="Home Weather Station"
+sitemap weatherStation label="Weather Station"
 {
 //	Frame label="Measurements" {
 ////		Group item=gWeatherStationMeasurements label="Measurements"
@@ -37,10 +37,10 @@ sitemap homeWeatherStation label="Home Weather Station"
 		Text item=WeatherStationProcessedHumidity valuecolor=[>85="red",>60="orange",>15="green",<15="blue"]
 		Text item=WeatherStationProcessedPressure
 		Text item=WeatherStationProcessedDewPoint valuecolor=[>25="red",>20="orange",>15="green",<15="blue"]
-		Text item=WeatherStationProcessedWindDirString visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
-		Text item=WeatherStationMeasurementWindSpd valuecolor=[>=50="red",>15="grey",<15="black"]  visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
-		Text item=WeatherStationMeasurementWindSpdMax valuecolor=[>=50="red",>15="grey",<15="black"] visibility=[WeatherStationStatusWeatherMeters!="ERROR"]	
-		Text item=WeatherStationProcessedDayRainTotal visibility=[WeatherStationStatusWeatherMeters!="ERROR"]
+		Text item=WeatherStationProcessedWindDirString visibility=[WeatherStationStatusWeatherMeters=="CONNECTED"]
+		Text item=WeatherStationMeasurementWindSpd valuecolor=[>=50="red",>15="grey",<15="black"]  visibility=[WeatherStationStatusWeatherMeters=="CONNECTED"]
+		Text item=WeatherStationMeasurementWindSpdMax valuecolor=[>=50="red",>15="grey",<15="black"] visibility=[WeatherStationStatusWeatherMeters=="CONNECTED"]	
+		Text item=WeatherStationProcessedDayRainTotal visibility=[WeatherStationStatusWeatherMeters=="CONNECTED"]
 	}
 	Frame label="Daily Summary" {
 		Text item=WeatherStationProcessedTemperatureMinFormatted
@@ -75,6 +75,6 @@ sitemap homeWeatherStation label="Home Weather Station"
 				Text item=WeatherStationProcessedLastUpdate
 			}
 		}
+		Group item=gWeatherStationMeasurements label="All Latest Measurements"
 	}
 }
-

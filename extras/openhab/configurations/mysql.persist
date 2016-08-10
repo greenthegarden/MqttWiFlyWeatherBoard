@@ -12,6 +12,6 @@ Items {
 	// add items wanted for long-term retrieval
 //	WeatherStationProcessedTemperature : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
 	gWeatherStationSql* : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
-	gemonPiSql* : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
-//	gSql* : strategy = everyChange, everyHour, everyDay, restoreOnStartup
+//	gemonPiSql* : strategy = everyChange, everyMinute, everyDay, restoreOnStartup
+	gSql* : strategy = everyChange, everyHour, everyDay, restoreOnStartup
 }

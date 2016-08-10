@@ -1,5 +1,32 @@
-/* Weather Station */
-Group    gWeatherStation (gAll)
+/* Weather Report */
+Group gWeatherStation
+
+/* Measurement type groups */
+Group gTemperature
+Group gHumidity
+Group gPressure
+Group gLightlevel
+Group gWind
+Group gRain
+
+/* Sensor Type groups */
+Group gSht15
+Group gBmp085
+Group gDht22
+Group gTemt6000
+
+//Number    SHT15_Temperature	      "Temperature [%.1f °C]"  <temperature>  (gWeatherStation, gSht15, gTemperature)	 {mqtt="<[openhab:weather/measurement/SHT15_temp:state:default]"}
+//Number    SHT15_Humidity          "Humidity [%.1f %%]"		              (gWeatherStation, gSht15, gHumidity)       {mqtt="<[openhab:weather/measurement/SHT15_humidity:state:default]"}
+//Number    BMP085_Temperature      "Temperature [%.1f °C]"  <temperature>  (gWeatherStation, gBmp085, gTemperature)	 {mqtt="<[openhab:weather/measurement/BMP085_temp:state:default]"}
+//Number    BMP085_Pressure         "Pressure [%.1f Pa]"                     (gWeatherStation, gBmp085, gPressure)	     {mqtt="<[openhab:weather/measurement/BMP085_pressure:state:default]"}
+//Number    DHT22_Temperature       "Temperature [%.1f °C]"  <temperature>  (gWeatherStation, gDht22, gTemperature)	 {mqtt="<[openhab:weather/measurement/DHT22_temp:state:default]"}
+//Number    DHT22_Humidity          "Humidity [%.1f %%]"		              (gWeatherStation, gDht22, gHumidity)       {mqtt="<[openhab:weather/measurement/DHT22_humidity:state:default]"}
+//Number    TEMT6000_Lightleve_Raw  "Light Level Raw [%d / 1023]"		      (gWeatherStation, gTemt6000)               {mqtt="<[openhab:weather/measurement/TEMT6000_light_raw:state:default]"}
+//Number    TEMT6000_Lightlevel     "Light Level Raw [%d %%]"		          (gWeatherStation, gTemt6000, gLightlevel)  {mqtt="<[openhab:weather/measurement/TEMT6000_light:state:default]"}
+//Number    Wind_Speed              "Wind Speed [%.1f knots]"    	          (gWeatherStation, gWind)                   {mqtt="<[openhab:weather/measurement/wind_spd:state:default]"}
+//Number    Wind_Speed_Max          "Wind Speed Max [%.1f knots]"    	      (gWeatherStation, gWind)                   {mqtt="<[openhab:weather/measurement/wind_spd_max:state:default]"}
+//Number    Wind_Direction          "Wind Direction [%.1f °]"     	      (gWeatherStation, gWind)                   {mqtt="<[openhab:weather/measurement/wind_dir:state:default]"}
+//Number    Rainfall                "Rainfall [%.1f mm]"     	              (gWeatherStation, gRain)                   {mqtt="<[openhab:weather/measurement/rain:state:default]"}
 
 /* Persistence Groups */
 Group   gWeatherStationSql (gWeatherStation, gSql)
@@ -7,44 +34,43 @@ Group   gWeatherStationChart (gWeatherStation, gChart)
 
 /* Status */
 Group    gWeatherStationStatus (gWeatherStation)
-String   WeatherStationStatusWifly                  "Wifly [%s]"                      (gWeatherStationStatus)        {mqtt="<[pi:weather/status/wifly:state:default]"}
-//String   WeatherStationStatusBattery                "Battery [%s]"                    (gWeatherStationStatus)        {mqtt="<[pi:weather/status/battery:state:default]"}
-//String   WeatherStationStatusMemory                 "Memory [%s]"                     (gWeatherStationStatus)        {mqtt="<[pi:weather/status/memory:state:default]"}
-String   WeatherStationStatusBmp085                 "BMP085 [%s]"                     (gWeatherStationStatus)        {mqtt="<[pi:weather/status/bmp085:state:default]"}
-String   WeatherStationStatusWeatherMeters          "Weather Meters [%s]"             (gWeatherStationStatus)        {mqtt="<[pi:weather/status/wm:state:default]"}
-String   WeatherStationStatusDht22                  "DHT22 [%s]"                      (gWeatherStationStatus)        {mqtt="<[pi:weather/status/dht22:state:default]"}
+String   WeatherStationStatusWifly                  "Wifly [%s]"                      (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/wifly:state:default]"}
+//String   WeatherStationStatusBattery                "Battery [%s]"                    (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/battery:state:default]"}
+//String   WeatherStationStatusMemory                 "Memory [%s]"                     (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/memory:state:default]"}
+String   WeatherStationReportStart                  "[%s]"                            (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/report:state:START]"}
+String   WeatherStationReportEnd                    "[%s]"                            (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/report:state:END]"}
+String   WeatherStationStatusBmp085                 "BMP085 [%s]"                     (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/bmp085:state:default]"}
+String   WeatherStationStatusWeatherMeters          "Weather Meters [%s]"             (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/wm:state:default]"}
+String   WeatherStationStatusDht22                  "DHT22 [%s]"                      (gWeatherStationStatus)        {mqtt="<[openhab:weather/status/dht22:state:default]"}
 
 /* SunAirPlus */
 Group    gWeatherStationSunAirPlus                                                    (gWeatherStation)
 Group    gWeatherStationSunAirPlusVoltageChart                                        (gWeatherStationSunAirPlus, gWeatherStationChart)
 Group    gWeatherStationSunAirPlusPowerChart                                          (gWeatherStationSunAirPlus, gWeatherStationChart)
-Number   WeatherStationSunAirPlusBatteryVoltage     "Battery Voltage [%.1f V]"        (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[pi:weather/sunairplus/battery_voltage:state:default]"}
-Number   WeatherStationSunAirPlusBatteryCurrent     "Battery Current [%.1f mA]"       (gWeatherStationSunAirPlus)    {mqtt="<[pi:weather/sunairplus/battery_current:state:default]"}
-Number   WeatherStationSunAirPlusSolarVoltage       "Solar Voltage [%.1f V]"          (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[pi:weather/sunairplus/solar_voltage:state:default]"}
-Number   WeatherStationSunAirPlusSolarCurrent       "Solar Current [%.1f mA]"         (gWeatherStationSunAirPlus)    {mqtt="<[pi:weather/sunairplus/solar_current:state:default]"}
-Number   WeatherStationSunAirPlusOutputVoltage      "Output Voltage [%.1f V]"         (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[pi:weather/sunairplus/output_voltage:state:default]"}
-Number   WeatherStationSunAirPlusOutputCurrent      "Output Current [%.1f mA]"        (gWeatherStationSunAirPlus)    {mqtt="<[pi:weather/sunairplus/output_current:state:default]"}
+Number   WeatherStationSunAirPlusBatteryVoltage     "Battery Voltage [%.1f V]"        (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[openhab:weather/sunairplus/battery_voltage:state:default]"}
+Number   WeatherStationSunAirPlusBatteryCurrent     "Battery Current [%.1f mA]"       (gWeatherStationSunAirPlus)                                           {mqtt="<[openhab:weather/sunairplus/battery_current:state:default]"}
+Number   WeatherStationSunAirPlusSolarVoltage       "Solar Voltage [%.1f V]"          (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[openhab:weather/sunairplus/solar_voltage:state:default]"}
+Number   WeatherStationSunAirPlusSolarCurrent       "Solar Current [%.1f mA]"         (gWeatherStationSunAirPlus)                                           {mqtt="<[openhab:weather/sunairplus/solar_current:state:default]"}
+Number   WeatherStationSunAirPlusOutputVoltage      "Output Voltage [%.1f V]"         (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusVoltageChart)    {mqtt="<[openhab:weather/sunairplus/output_voltage:state:default]"}
+Number   WeatherStationSunAirPlusOutputCurrent      "Output Current [%.1f mA]"        (gWeatherStationSunAirPlus)                                           {mqtt="<[openhab:weather/sunairplus/output_current:state:default]"}
 Number   WeatherStationSunAirPlusBatteryPower       "Battery Power [%.1f mW]"         (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusPowerChart)
 Number   WeatherStationSunAirPlusSolarPower         "Solar Power [%.1f mW]"           (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusPowerChart)
 Number   WeatherStationSunAirPlusOutputPower        "Output Power [%.1f mW]"          (gWeatherStationSunAirPlus, gWeatherStationSunAirPlusPowerChart)
 
-String   WeatherStationReportStart                  "[%s]"                            (gWeatherStationMeasurements)  {mqtt="<[pi:weather/measurement/report:state:START]"}
-String   WeatherStationReportEnd                    "[%s]"                            (gWeatherStationMeasurements)  {mqtt="<[pi:weather/measurement/report:state:END]"}
-
 /* Measurements (raw) */
 Group    gWeatherStationMeasurements (gWeatherStation)
-Number   WeatherStationMeasurementSHT15Temp         "Temperature (SHT15) [%.1f °C]"   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/SHT15_temp:state:default]"}
-Number   WeatherStationMeasurementDHT22Temp         "Temperature (DHT22) [%.1f °C]"   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/DHT22_temp:state:default]"}
-Number   WeatherStationMeasurementBMP085Temp        "Temperature (BMP085) [%.1f °C]"  (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/BMP085_temp:state:default]"}
-Number   WeatherStationMeasurementSHT15Humidity     "Humidity (SHT15) [%.1f %%]"      (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/SHT15_humidity:state:default]"}
-Number   WeatherStationMeasurementDHT22Humidity     "Humidity (DHT22) [%.1f %%]"      (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/DHT22_humidity:state:default]"}
-Number   WeatherStationMeasurementBMP085Pressure    "Pressure (BMP085) [%.1f hPa]"    (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/BMP085_pressure:state:default]"}
-Number   WeatherStationMeasurementTEMT6000LightRaw  "Light Raw[%d]"                   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/TEMT6000_light_raw:state:default]"}
-Number   WeatherStationMeasurementTEMT6000Light     "Light [%d %%]"                   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/TEMT6000_light:state:default]"}
-Number   WeatherStationMeasurementWindSpd           "Wind Speed [%.1f knots]"         (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/wind_spd:state:default]"}
-Number   WeatherStationMeasurementWindSpdMax        "Maximum Wind Speed [%.1f knots]" (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/wind_spd_max:state:default]"}
-Number   WeatherStationMeasurementWindDir           "Wind Direction [%.1f°]"          (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/wind_dir:state:default]"}
-Number   WeatherStationMeasurementRain              "Rain [%.1f mm]"                  (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[pi:weather/measurement/rain:state:default]"}
+Number   WeatherStationMeasurementSHT15Temp         "Temperature (SHT15) [%.1f °C]"   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/SHT15_temp:state:default]"}
+Number   WeatherStationMeasurementDHT22Temp         "Temperature (DHT22) [%.1f °C]"   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/DHT22_temp:state:default]"}
+Number   WeatherStationMeasurementBMP085Temp        "Temperature (BMP085) [%.1f °C]"  (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/BMP085_temp:state:default]"}
+Number   WeatherStationMeasurementSHT15Humidity     "Humidity (SHT15) [%.1f %%]"      (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/SHT15_humidity:state:default]"}
+Number   WeatherStationMeasurementDHT22Humidity     "Humidity (DHT22) [%.1f %%]"      (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/DHT22_humidity:state:default]"}
+Number   WeatherStationMeasurementBMP085Pressure    "Pressure (BMP085) [%.1f hPa]"    (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/BMP085_pressure:state:default]"}
+Number   WeatherStationMeasurementTEMT6000LightRaw  "Light Raw[%d]"                   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/TEMT6000_light_raw:state:default]"}
+Number   WeatherStationMeasurementTEMT6000Light     "Light [%d %%]"                   (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/TEMT6000_light:state:default]"}
+Number   WeatherStationMeasurementWindSpd           "Wind Speed [%.1f knots]"         (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/wind_spd:state:default]"}
+Number   WeatherStationMeasurementWindSpdMax        "Maximum Wind Speed [%.1f knots]" (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/wind_spd_max:state:default]"}
+Number   WeatherStationMeasurementWindDir           "Wind Direction [%.1f°]"          (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/wind_dir:state:default]"}
+Number   WeatherStationMeasurementRain              "Rain [%.1f mm]"                  (gWeatherStationMeasurements, gWeatherStationSql)  {mqtt="<[openhab:weather/measurement/rain:state:default]"}
 
 /* Processed Data */
 Group    gWeatherStationProcessed (gWeatherStation)
@@ -74,4 +100,5 @@ Number   WeatherStationProcessedTemperatureYearMax  "Year's maximum [%.1f °C]" 
 
 
 /* Device */
-Switch   WeatherStationWiflyNetworkStatus           "On network"                      (gWeatherStation)              {nh="192.168.1.51"}
+Switch   WeatherStationWiflyNetworkStatus           "On network"                      (gWeatherStation)              {nh="192.168.1.56"}
+

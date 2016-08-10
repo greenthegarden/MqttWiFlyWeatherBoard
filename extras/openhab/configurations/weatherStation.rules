@@ -90,7 +90,7 @@ then
     var Number Min
     var Number Max
     var String tmp
-    var SimpleDateFormat df = new SimpleDateFormat( "HH:mm" ) 
+    var SimpleDateFormat df = new SimpleDateFormat( "HH:mm" )
 
     if (WeatherStationProcessedTemperature.state instanceof DecimalType) {
         Min = (WeatherStationProcessedTemperature.minimumSince(now.withTimeAtStartOfDay, "mysql").state as DecimalType)
@@ -100,7 +100,7 @@ then
 
         Max = WeatherStationProcessedTemperature.maximumSince(now.withTimeAtStartOfDay, "mysql").state as DecimalType
 		postUpdate(WeatherStationProcessedTemperatureDayMax, Max)
-        df = new SimpleDateFormat( "HH:mm" ) 
+        df = new SimpleDateFormat( "HH:mm" )
         tmp = (Math::round(Max.floatValue*10.0)/10.0) + " °C @ " + df.format(WeatherStationProcessedTemperature.maximumSince(now.withTimeAtStartOfDay, "mysql").timestamp)
         postUpdate(WeatherStationProcessedTemperatureMaxFormatted, tmp)
     }
@@ -124,19 +124,19 @@ when
 	Item WeatherStationProcessedLastUpdate changed
 then
     var Number dewpoint = 0.0
-    
+
     val Number Tc = WeatherStationProcessedTemperature.state as DecimalType
     val Number H = WeatherStationProcessedHumidity.state as DecimalType
-	
+
 	var Tn = 243.12
 	var m  = 17.62
 	if (Tc <= 0.0) {
 		Tn = 272.62
 		m  = 22.46
 	}
-	
+
 	dewpoint = (Tn*(Math::log((H/100.0).doubleValue)+((m*Tc)/(Tn+Tc)))/(m-Math::log((H/100.0).doubleValue)-((m*Tc)/(Tn+Tc))))
-	
+
 	postUpdate(WeatherStationProcessedDewPoint, dewpoint)
 end
 
@@ -200,7 +200,7 @@ when
 then
 	var Number voltage = WeatherStationSunAirPlusBatteryVoltage.state as DecimalType
 	var Number current = WeatherStationSunAirPlusBatteryCurrent.state as DecimalType
-	
+
 	postUpdate(WeatherStationSunAirPlusBatteryPower, voltage * current)
 end
 
@@ -211,7 +211,7 @@ when
 then
 	var Number voltage = WeatherStationSunAirPlusSolarVoltage.state as DecimalType
 	var Number current = WeatherStationSunAirPlusSolarCurrent.state as DecimalType
-	
+
 	postUpdate(WeatherStationSunAirPlusSolarPower, voltage * current)
 end
 
@@ -222,8 +222,6 @@ when
 then
 	var Number voltage = WeatherStationSunAirPlusOutputVoltage.state as DecimalType
 	var Number current = WeatherStationSunAirPlusOutputCurrent.state as DecimalType
-	
+
 	postUpdate(WeatherStationSunAirPlusOutputPower, voltage * current)
 end
-
-	
