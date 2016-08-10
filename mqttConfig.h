@@ -29,12 +29,14 @@ const char MQTT_PAYLOAD_ERROR[]       PROGMEM = "ERROR";
 const char MQTT_PAYLOAD_START[]       PROGMEM = "START";
 const char MQTT_PAYLOAD_END[]         PROGMEM = "END";
 const char MQTT_PAYLOAD_SLEEP[]       PROGMEM = "SLEEP";
+const char MQTT_PAYLOAD_OK[]          PROGMEM = "OK";
 
 PGM_P const MQTT_PAYLOADS[]           PROGMEM = { MQTT_PAYLOAD_CONNECTED,   // idx = 0
                                                   MQTT_PAYLOAD_ERROR,       // idx = 1
                                                   MQTT_PAYLOAD_START,       // idx = 2
                                                   MQTT_PAYLOAD_END,         // idx = 3
                                                   MQTT_PAYLOAD_SLEEP,       // idx = 4
+                                                  MQTT_PAYLOAD_OK,          // idx = 5
                                                 };
                                               
 // status topics
