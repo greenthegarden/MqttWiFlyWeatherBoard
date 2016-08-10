@@ -9,10 +9,10 @@ const int DHT22_PIN = 11;
 
 byte dht22_measurement()
 {
-  byte chk = dht22_reading(DHT22_PIN);
+  int chk = dht22_reading(DHT22_PIN);
 
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[6])));
 
   switch (chk) {
     case DHTLIB_OK :

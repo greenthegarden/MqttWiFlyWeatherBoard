@@ -50,12 +50,11 @@ PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,      
                                                       BMP085_ERROR_PRESSURE_GET,    // idx = 5
                                                     };
 
-
-// initialisation of sensor objects
+// instantiation of sensor objects
 SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
 SFE_BMP085 pressureSensor(BMP_ADDR);
 
-void weatherboard_sensors_initialisaton()
+void weatherboard_sensors_init()
 {
   // Configure sensors
   // set up inputs and outputs
@@ -80,7 +79,7 @@ void weatherboard_sensors_initialisaton()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
@@ -89,7 +88,7 @@ void weatherboard_sensors_initialisaton()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   }
@@ -178,7 +177,7 @@ void publish_bmp085_measurements()
           messBuffer[0] = '\0';
           strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
           progBuffer[0] = '\0';
-          strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+          strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
           mqttClient.publish(progBuffer, messBuffer);
         }
       } else {
@@ -186,7 +185,7 @@ void publish_bmp085_measurements()
         messBuffer[0] = '\0';
         strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
         progBuffer[0] = '\0';
-        strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+        strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
         mqttClient.publish(progBuffer, messBuffer);
       }
     } else {
@@ -194,7 +193,7 @@ void publish_bmp085_measurements()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   } else {
@@ -202,7 +201,7 @@ void publish_bmp085_measurements()
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char*)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
     mqttClient.publish(progBuffer, messBuffer);
   }
 }
@@ -375,19 +374,19 @@ byte weatherboard_meters_connected()
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[1])));
     progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
+    strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
     mqttClient.publish(progBuffer, messBuffer);
     return 0;
   }
   messBuffer[0] = '\0';
   strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[4])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[5])));
   mqttClient.publish(progBuffer, messBuffer);
   return 1;
 }
 
-void weatherboard_meters_initialisation()
+void weatherboard_meters_init()
 {
   // check wind direction measurement which will indicate an error
   // publish an error if not connected

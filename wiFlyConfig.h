@@ -13,7 +13,7 @@
 
   RN-XV WiFly Module – SMA
     MAC: 00:06:66:71:68:d5
-    IP:  192.168.1.51
+    IP:  192.168.1.56
 */
 
 /*
@@ -42,125 +42,97 @@
     None/Off:      Associated, Internet detected
 */
 
-/*
-  WiFly configuration
-
-  The following is the sequence of commands I use to
-  configure the WiFly module used when running this code.
-  (ensure values for ssid and phrase entered in place of xxx)
-
-reboot
-$$$
-factory RESET
-
-set wlan join 0    // Stop device connecting while we setup
-
-set ip dhcp 1
-set wlan ssid xxx
-set wlan phrase xxx
-set wlan join 1
-
-save
-reboot
-*/
-
 // WiFly setup and connection routines
 
 // WiFly libraries
 #include <SPI.h>
 #include <WiFly.h>
 
+#define USE_WIFLY_SLEEP true
+
 #include "networkConfig.h"
 
-boolean wiflyConnected = false;
+boolean wiflyConnectedToNetwork = false;
 
-WiFlyClient wiflyClient;
+WiFlyClient networkClient;      // creates a WiFly instance
 
-void wifly_configure()
+void wifly_init()
 {
+  DEBUG_LOG(1, "  setting interface");
+#if DEBUG_LEVEL == 0
   Serial.begin(BAUD_RATE);      // Start hardware Serial for the RN-XV
+#endif
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
+
+  DEBUG_LOG(1, "  configuring");
+  WiFly.begin();
 }
 
-byte wifly_connect()
+const unsigned long AFTER_WAKE_DELAY = 2000UL; // milliseconds
+
+void wifly_after_wake()
+{
+  delay(AFTER_WAKE_DELAY);
+  DEBUG_LOG(1, "after waking");
+  WiFly.disableTimers();
+  WiFly.begin();
+}
+
+const byte NETWORK_CONNECT_ATTEMPTS = 5;
+
+byte wifly_connect_to_network()
 {
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  DEBUG_LOG(1, "initialising wifly");
+  DEBUG_LOG(1, "  joining network");
 
-  WiFly.begin();
-//  delay(5000);  // time for WiFly to start
-
-  wdt_reset();  // reset watchdog timer
-
-  DEBUG_LOG(1, "joining network");
-
-  if (!WiFly.join(SSID, PASSPHRASE, mode)) {
-    wiflyConnected = false;
-    DEBUG_LOG(1, "  connection failed");
-  } else {
-    wiflyConnected = true;
-    DEBUG_LOG(1, "  connected");
+  for (byte i = 0; i < NETWORK_CONNECT_ATTEMPTS; i++) {
+    DEBUG_LOG(1, "  ATTEMPT:");
+    DEBUG_LOG(1, i + 1);
+    if (!WiFly.join(SSID, PASSPHRASE, mode)) {
+      wiflyConnectedToNetwork = false;
+      DEBUG_LOG(1, "  connection failed");
+    } else {
+      wiflyConnectedToNetwork = true;
+      DEBUG_LOG(1, "  connected");
 #if USE_STATUS_LED
-    digitalWrite(STATUS_LED, LOW);
+      digitalWrite(STATUS_LED, LOW);
 #endif
-    wdt_reset();  // reset watchdog timer
-    return 1;
+      return 1;
+    }
   }
-  wdt_reset();  // reset watchdog timer
   return 0;
 }
 
-byte wifly_disconnect()
+byte wifly_disconnect_from_network()
 {
-  if (wiflyConnected) {
+  if (wiflyConnectedToNetwork) {
     WiFly.leave();
-    wiflyConnected = false;
-    wdt_reset();  // reset watchdog timer
+    wiflyConnectedToNetwork = false;
+    DEBUG_LOG(1, "    DISCONNECTED");
     return 1;
   }
+  DEBUG_LOG(1, "    NOT CONNECTED");
   return 0;
 }
 
-const unsigned long SLEEP_TIMER_DELAY_SECS = 5UL;  // seconds delay to sleep WiFly
+#if USE_WIFLY_SLEEP
 const unsigned long WAKE_TIMER_DELTA_SECS  = 20UL;  // seconds early to wake WiFly
-
-void wifly_configure_sleep()
-{
-  /*
-   * sets the automatic wake timer, where <value> is a decimal number
-   * representing the number of seconds after which the module wakes from sleep.
-   * Setting <value> to 0 disables.
-   */
-  DEBUG_LOG(1, "WiFly: setting wake timer");
-  WiFly.setWakeTimer(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
-
-  /*
-   * Sets the sleep timer, where <value> is a decimal number.
-   * The sleep timer is the time (in seconds) after which the module goes to sleep.
-   * This timer is dis- abled during an open TCP connection.
-   * When the TCP connection is closed, the module counts down and puts the module to sleep after <value> seconds.
-   * Setting the value to 0 disables the sleep timer, and the module will not go to sleep based on this counter.
-   */
-   
-  /* 
-   *  Note: Be sure to set the wake timer before issuing the sleep timer if you are not using an external wake up signal;
-   *  otherwise, the module will never wake up.
-   */
-//  DEBUG_LOG(1, "WiFly: setting sleep timer");
-//  WiFly.setSleepTimer(SLEEP_TIMER_DELAY_SECS);
-}
-
 
 void wifly_sleep()
 {
-  // close tcp connection
-  wifly_disconnect();
+  DEBUG_LOG(1, "sleeping wifly");
 
-  WiFly.sleep();
+  // close tcp connection
+  wifly_disconnect_from_network();
+
+  delay(500);
+
+  WiFly.sleep(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
 }
+#endif  /* USE_WIFLY_SLEEP */
 
 
 #endif  /* MQTTWIFLYWEATHERBOARD_WIFLYCONFIG_H_ */

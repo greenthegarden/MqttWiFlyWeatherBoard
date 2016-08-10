@@ -2,42 +2,36 @@
 #define MQTTWIFLYWEATHERBOARD_CONFIG_H_
 
 
-//#define DEBUG                   false    // turn on DEBUG in libraries
-
 #include "debug.h"
 
-#include "watchdogConfig.h"
-
-const byte BUFFER_SIZE          = 42;
+const byte BUFFER_SIZE                        = 42;
 char progBuffer[BUFFER_SIZE];
 char messBuffer[BUFFER_SIZE];
 
-const byte FLOAT_DECIMAL_PLACES = 1;
+const byte FLOAT_DECIMAL_PLACES               = 1;
 
 // character buffer to support conversion of floats to char
 char buf[12];
 
 // Serial parameters
-const int BAUD_RATE             = 9600;
+const int BAUD_RATE                           = 9600;
 
 // program constants
 const unsigned long MEASUREMENT_INTERVAL_SECS = 5UL * 60UL;
-const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // 5 minutes = 5 * 60 * 1000 miliiseconds
-const unsigned long AFTER_ERROR_DELAY         = 60UL * 1000UL;
+const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // 5 minutes = 5 * 60 * 1000 milliseconds
 
 // global variable definitions
-unsigned long previousMeasurementMillis     = 0;
-unsigned long previousWindMeasurementMillis = 0;
-
+unsigned long previousMeasurementMillis       = 0;
+unsigned long previousWindMeasurementMillis   = 0;
 
 #include "wiFlyConfig.h"
-#include "mqttConfig.h"
 
+#include "mqttConfig.h"
 
 // Define use of weather board sensors
 #define ENABLE_WEATHER_METERS     false
 #define ENABLE_WIND_DIR_AVERAGING false
-#define ENABLE_EXTERNAL_LIGHT     true
+#define ENABLE_EXTERNAL_LIGHT     false
 
 #include "weatherBoardConfig.h"
 

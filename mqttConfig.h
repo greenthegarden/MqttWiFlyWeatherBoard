@@ -19,28 +19,9 @@ void callback(char* topic, uint8_t* payload, unsigned int length)
   // nothing to do here!!
 }
 
-
-PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, wiflyClient);
-
+PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, networkClient);
 
 // MQTT topic definitions
-
-// status topics
-
-const char WIFLY_STATUS[]             PROGMEM = "weather/status/wifly";
-const char BATTERY_STATUS[]           PROGMEM = "weather/status/battery";
-const char MEMORY_STATUS[]            PROGMEM = "weather/status/memory";
-const char BMP085_STATUS[]            PROGMEM = "weather/status/bmp085";
-const char WEATHER_METERS_STATUS[]    PROGMEM = "weather/status/wm";
-const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
-
-PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,             // idx = 0
-                                                  BATTERY_STATUS,           // idx = 1
-                                                  MEMORY_STATUS,            // idx = 2
-                                                  BMP085_STATUS,            // idx = 3
-                                                  WEATHER_METERS_STATUS,    // idx = 4
-                                                  DHT22_STATUS,             // idx = 5
-                                                };
 
 // MQTT payloads
 const char MQTT_PAYLOAD_CONNECTED[]   PROGMEM = "CONNECTED";
@@ -55,11 +36,26 @@ PGM_P const MQTT_PAYLOADS[]           PROGMEM = { MQTT_PAYLOAD_CONNECTED,   // i
                                                   MQTT_PAYLOAD_END,         // idx = 3
                                                   MQTT_PAYLOAD_SLEEP,       // idx = 4
                                                 };
+                                              
+// status topics
+const char WIFLY_STATUS[]             PROGMEM = "weather/status/wifly";
+const char BATTERY_STATUS[]           PROGMEM = "weather/status/battery";
+const char MEMORY_STATUS[]            PROGMEM = "weather/status/memory";
+const char REPORT_STATUS[]            PROGMEM = "weather/status/report";
+const char BMP085_STATUS[]            PROGMEM = "weather/status/bmp085";
+const char WEATHER_METERS_STATUS[]    PROGMEM = "weather/status/wm";
+const char DHT22_STATUS[]             PROGMEM = "weather/status/dht22";
 
+PGM_P const STATUS_TOPICS[]           PROGMEM = { WIFLY_STATUS,             // idx = 0
+                                                  BATTERY_STATUS,           // idx = 1
+                                                  MEMORY_STATUS,            // idx = 2
+                                                  REPORT_STATUS,            // idx = 3
+                                                  BMP085_STATUS,            // idx = 4
+                                                  WEATHER_METERS_STATUS,    // idx = 5
+                                                  DHT22_STATUS,             // idx = 6
+                                                };
 
-                                                
 // measurement topics
-
 const char SHT15_TEMP_TOPIC[]         PROGMEM = "weather/measurement/SHT15_temp";
 const char SHT15_HUMIDITY_TOPIC[]     PROGMEM = "weather/measurement/SHT15_humidity";
 const char BMP085_TEMP_TOPIC[]        PROGMEM = "weather/measurement/BMP085_temp";
@@ -74,9 +70,6 @@ const char RAINFALL_TOPIC[]           PROGMEM = "weather/measurement/rain";
 const char DHT22_TEMP_TOPIC[]         PROGMEM = "weather/measurement/DHT22_temp";
 const char DHT22_HUMIDITY_TOPIC[]     PROGMEM = "weather/measurement/DHT22_humidity";
 
-const char MEASUREMENTS_REPORT[]      PROGMEM = "weather/measurement/report";
-
-//tables to refer to strings
 PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,         // idx = 0
                                                   SHT15_HUMIDITY_TOPIC,     // idx = 1
                                                   BMP085_TEMP_TOPIC,        // idx = 2
@@ -89,7 +82,6 @@ PGM_P const MEASUREMENT_TOPICS[]      PROGMEM = { SHT15_TEMP_TOPIC,         // i
                                                   RAINFALL_TOPIC,           // idx = 9
                                                   DHT22_TEMP_TOPIC,         // idx = 10
                                                   DHT22_HUMIDITY_TOPIC,     // idx = 11
-                                                  MEASUREMENTS_REPORT,      // idx = 12
                                                 };
                                                 
                                                 

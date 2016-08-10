@@ -53,6 +53,8 @@
     Restructured code to improve maintence and align with more recent projects.
   5.0 2016/05/15
     Added capability to 'sleep' WiFLy module 
+  5.1 2016/08/10
+    Fixed reliability of sleep
 */
 
 
@@ -74,9 +76,7 @@ void publish_measurements(void)
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement();
 #endif
-  wdt_reset();  // reset watchdog timer
 }
-
 
 byte publish_report()
 {
@@ -84,13 +84,11 @@ byte publish_report()
   digitalWrite(STATUS_LED, HIGH);
 #endif
   
-  if (!wiflyConnected) {
-    wifly_connect();
+  if (!wiflyConnectedToNetwork) {
+    wifly_connect_to_network();
   }
 
-  if (wiflyConnected) {
-    // MQTT client setup
-//    mqttClient.disconnect();
+  if (wiflyConnectedToNetwork) {
     if (mqttClient.connect(mqttClientId)) {
 
 #if USE_STATUS_LED
@@ -107,7 +105,7 @@ byte publish_report()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[2])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
 
       publish_measurements();
@@ -116,12 +114,10 @@ byte publish_report()
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[3])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(MEASUREMENT_TOPICS[12])));
+      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
 
       mqttClient.disconnect();  // should stop tcp connection
-
-      wdt_reset();  // reset watchdog timer
 
       return 1;
     } else {
@@ -144,24 +140,30 @@ void reset_cummulative_measurements()
  --------------------------------------------------------------------------------------*/
 void setup()
 {
+#if DEBUG_LEVEL > 0
+  Serial.begin(BAUD_RATE);      // Start hardware serial interface for debugging
+#endif
+
 #if USE_STATUS_LED
   // Configure status LED
   pinMode(STATUS_LED, OUTPUT);
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  // Configure WiFly
-  DEBUG_LOG(1, "configuring WiFly ...");
-  wifly_configure();
+  delay(2000);                  // use a delay to get things settled before configuring WiFly
 
-  DEBUG_LOG(1, "connecting WiFly ...");
-  wifly_connect();
+  // Configure WiFly
+  DEBUG_LOG(1, "WiFly");
+
+  wifly_init();
+
+  wifly_connect_to_network();
 
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
 
-  if (wiflyConnected) {
+  if (wiflyConnectedToNetwork) {
     if (mqttClient.connect(mqttClientId)) {
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
@@ -174,10 +176,10 @@ void setup()
     }
   }
 
-  weatherboard_sensors_initialisaton();
+  weatherboard_sensors_init();
 
 #if ENABLE_WEATHER_METERS
-  weatherboard_meters_initialisation();
+  weatherboard_meters_init();
 
   // turn on interrupts
   interrupts();
@@ -187,16 +189,14 @@ void setup()
   ina3221.begin();
 #endif
 
-  wifly_configure_sleep();
-
-  if (wiflyConnected) {
+  if (wiflyConnectedToNetwork) {
     if (mqttClient.connected())
       mqttClient.disconnect();
   }
 
+#if USE_WIFLY_SLEEP
   wifly_sleep();
-  
-  wdt_enable(WDTO_8S);    // enable watchdog timer
+#endif
 }
 /*--------------------------------------------------------------------------------------
  end setup()
@@ -212,8 +212,13 @@ void loop()
 
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
+#if USE_WIFLY_SLEEP
+    wifly_after_wake();
+#endif    
     publish_report();
+#if USE_WIFLY_SLEEP
     wifly_sleep();
+#endif
     reset_cummulative_measurements();
   }
 
@@ -245,8 +250,6 @@ void loop()
     windIntCount = 0;
   }
 #endif  // ENABLE_WEATHER_METERS
-
-  wdt_reset();  // reset watchdog timer
 }
 /*--------------------------------------------------------------------------------------
  end loop()
