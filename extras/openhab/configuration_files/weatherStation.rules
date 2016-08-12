@@ -64,7 +64,7 @@ then
 end
 
 // Define which sensor measurement pressure is based on
-rule "Set temperature"
+rule "Set pressure"
 when
 	Item WeatherStationMeasurementBMP085Pressure changed
 then
