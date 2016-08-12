@@ -270,7 +270,7 @@ const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by t
 
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
 #include "RunningAverageConfig.h"
-unsigned long WIND_MEASUREMENT_INTERVAL = 1000UL;
+unsigned long WIND_MEASUREMENT_INTERVAL = 1000UL;   // milliSeconds
 #endif
 
 void wind_speed_irq()

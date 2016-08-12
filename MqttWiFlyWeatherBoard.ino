@@ -212,26 +212,33 @@ void loop()
 {  
   unsigned long currentMillis = millis();
 
+#if USE_WIFLY_SLEEP
+  // WiFly wake monitor
+  // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
+  // the the RTS pin is driven low.
+  if (wiflyAfterSleep) {
+    // look for RTS pin high
+    if (digitalRead(RF_RTS) == HIGH) {
+      wiflyAwake = true;
+      wiflyReady = false;
+    }
+    if (wiflyAwake) {
+      if (digitalRead(RF_RTS) == LOW) {
+        wiflyReady = true;
+        wiflyAfterSleep = false;
+        wifly_after_wake();
+      }
+    }
+  }
+#endif
+
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
-    // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
-    // the the RTS pin is driven low.
-    unsigned long rtsMillis = millis();
-    while ((digitalRead(RF_RTS) != LOW) || (millis()-rtsMillis < RTS_TIMEOUT_MILLIS)) { } // do nothing
-    if (digitalRead(RF_RTS == LOW)) {
-      // pin is low => did not timeout
+    publish_report();
 #if USE_WIFLY_SLEEP
-      wifly_after_wake();
+    wifly_sleep();
 #endif
-      publish_report();
-#if USE_WIFLY_SLEEP
-      wifly_sleep();
-#endif
-      reset_cummulative_measurements();
-    } else {
-      // not sure what to do if timed out!!
-      // unlikely to ever recover
-    }
+    reset_cummulative_measurements();
   }
 
 #if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING
