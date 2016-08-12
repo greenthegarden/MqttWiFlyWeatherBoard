@@ -18,7 +18,7 @@ const int BAUD_RATE                           = 9600;
 
 // program constants
 const unsigned long MEASUREMENT_INTERVAL_SECS = 15UL * 60UL;
-const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // 5 minutes = 5 * 60 * 1000 milliseconds
+const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // conversion to milliseconds
 
 // global variable definitions
 unsigned long previousMeasurementMillis       = 0;

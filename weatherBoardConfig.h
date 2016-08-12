@@ -234,7 +234,6 @@ void publish_temt6000_measurement()
   mqttClient.publish(progBuffer, buf);
 }
 
-
 #if ENABLE_WEATHER_METERS
 
 // Global variables 
@@ -254,7 +253,6 @@ volatile unsigned long rainLast     = 0;
 volatile unsigned long rainInterval = 0;
 volatile unsigned long rain         = 0;
 
-
 // Constant conversion factors
 //const float WIND_RPM_TO_MPH  = 22.686745;         // divide RPM by this for velocity
 const float WIND_RPM_TO_MPS    = 50.748803;         // divide RPM by this for meters per second
@@ -264,13 +262,9 @@ const float WIND_RPM_TO_KNOTS  = WIND_RPM_TO_MPS / 1.943844492;
 const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by this for mm
 
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
-#include "RunningAverage.h"
-byte WIND_MEASUREMENT_AVERAGING_SIZE    = 10;
+#include "RunningAverageConfig.h"
 unsigned long WIND_MEASUREMENT_INTERVAL = 1000;
-RunningAverage wind_spd_avg(WIND_MEASUREMENT_AVERAGING_SIZE);
-RunningAverage wind_dir_avg(WIND_MEASUREMENT_AVERAGING_SIZE);
 #endif
-
 
 void wind_speed_irq()
 // if the Weather Meters are attached, measure anemometer RPM (2 ticks per rotation), set flag if RPM is updated
