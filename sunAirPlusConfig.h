@@ -30,6 +30,16 @@ PGM_P const SUNAIRPLUS_TOPICS[]       PROGMEM = { BATTERY_VOLTAGE_TOPIC,     // 
                                                   OUTPUT_CURRENT_TOPIC,      // idx = 5
                                                 };
 
+/* SUNAIRPLUS_TOPICS indices, must match table above */
+typedef enum {
+  BATTERY_VOLTAGE_TOPIC_IDX  = 0,
+  BATTERY_CURRENT_TOPIC_IDX  = 1,
+  SOLAR_VOLTAGE_TOPIC_IDX    = 2,
+  SOLAR_CURRENT_TOPIC_IDX    = 3,
+  OUTPUT_VOLTAGE_TOPIC_IDX   = 4,
+  OUTPUT_CURRENT_TOPIC_IDX   = 5,
+} sunairplus_topics;
+
 void publish_sunairplus_measurement()
 {
   float measurement = 0.0;
@@ -40,7 +50,7 @@ void publish_sunairplus_measurement()
   buf[0] = '\0';
   dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[0])));
+  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[BATTERY_VOLTAGE_TOPIC_IDX])));
   mqttClient.publish(progBuffer, buf);
   
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);

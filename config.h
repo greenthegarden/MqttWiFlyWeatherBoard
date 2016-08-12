@@ -17,7 +17,7 @@ char buf[12];
 const int BAUD_RATE                           = 9600;
 
 // program constants
-const unsigned long MEASUREMENT_INTERVAL_SECS = 5UL * 60UL;
+const unsigned long MEASUREMENT_INTERVAL_SECS = 15UL * 60UL;
 const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // 5 minutes = 5 * 60 * 1000 milliseconds
 
 // global variable definitions
@@ -29,18 +29,18 @@ unsigned long previousWindMeasurementMillis   = 0;
 #include "mqttConfig.h"
 
 // Define use of weather board sensors
-#define ENABLE_WEATHER_METERS     false
-#define ENABLE_WIND_DIR_AVERAGING false
-#define ENABLE_EXTERNAL_LIGHT     false
+#define ENABLE_WEATHER_METERS     true
+#define ENABLE_WIND_DIR_AVERAGING true
+#define ENABLE_EXTERNAL_LIGHT     true
 
 #include "weatherBoardConfig.h"
 
 // status LED to show when WiFLy is connecting (consider turning off to save power)
-#define USE_STATUS_LED            true
+#define USE_STATUS_LED            false
 
 // Define user of external sensors
 #define ENABLE_POWER_MONITOR      true    // for use with SwitchDoc Lab SunAirPlus
-#define ENABLE_DHT22              true
+#define ENABLE_DHT22              false
 
 #if ENABLE_POWER_MONITOR
 #include "sunAirPlusConfig.h"
