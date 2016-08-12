@@ -65,20 +65,23 @@ void wifly_init()
   WiFly.setUart(&Serial);       // Tell the WiFly library that we are not using the SPIUart
 
   DEBUG_LOG(1, "  configuring");
+  WiFly.disableTimers();
   WiFly.begin();
 }
 
-const unsigned long AFTER_WAKE_DELAY = 2000UL; // milliseconds
+const unsigned long RTS_TIMEOUT_MILLIS = 500UL;
+
+const unsigned long AFTER_WAKE_DELAY   = 2000UL; // milliseconds
 
 void wifly_after_wake()
 {
-  delay(AFTER_WAKE_DELAY);
+//  delay(AFTER_WAKE_DELAY);
   DEBUG_LOG(1, "after waking");
   WiFly.disableTimers();
   WiFly.begin();
 }
 
-const byte NETWORK_CONNECT_ATTEMPTS = 5;
+const byte NETWORK_CONNECT_ATTEMPTS    = 5;
 
 byte wifly_connect_to_network()
 {

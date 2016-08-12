@@ -21,8 +21,8 @@ const unsigned long MEASUREMENT_INTERVAL_SECS = 15UL * 60UL;
 const unsigned long MEASUREMENT_INTERVAL      = MEASUREMENT_INTERVAL_SECS * 1000UL;   // conversion to milliseconds
 
 // global variable definitions
-unsigned long previousMeasurementMillis       = 0;
-unsigned long previousWindMeasurementMillis   = 0;
+unsigned long previousMeasurementMillis       = 0UL;
+unsigned long previousWindMeasurementMillis   = 0UL;
 
 #include "wiFlyConfig.h"
 

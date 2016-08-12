@@ -54,6 +54,13 @@ PGM_P const BMP085_STATUS_MESSAGES[]      PROGMEM = { BMP085_INIT_SUCCESS,      
 SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
 SFE_BMP085 pressureSensor(BMP_ADDR);
 
+void rfpins_init()
+{
+  // configure CTS and RTS pins as inputs
+  pinMode(RF_CTS, INPUT);
+  pinMode(RF_RTS, INPUT);
+}
+
 void weatherboard_sensors_init()
 {
   // Configure sensors
@@ -242,16 +249,16 @@ unsigned int windRpm                = 0;
 unsigned int windRpmMax             = 0;
 unsigned int windStopped            = 0;
 // volatiles are subject to modification by IRQs
-volatile unsigned long tempWindRpm  = 0;
-volatile unsigned long windTime     = 0;
-volatile unsigned long windLast     = 0;
-volatile unsigned long windInterval = 0;
+volatile unsigned long tempWindRpm  = 0UL;
+volatile unsigned long windTime     = 0UL;
+volatile unsigned long windLast     = 0UL;
+volatile unsigned long windInterval = 0UL;
 volatile unsigned char windIntCount;
 volatile boolean       gotWindSpeed;
-volatile unsigned long rainTime     = 0;
-volatile unsigned long rainLast     = 0;
-volatile unsigned long rainInterval = 0;
-volatile unsigned long rain         = 0;
+volatile unsigned long rainTime     = 0UL;
+volatile unsigned long rainLast     = 0UL;
+volatile unsigned long rainInterval = 0UL;
+volatile unsigned long rain         = 0UL;
 
 // Constant conversion factors
 //const float WIND_RPM_TO_MPH  = 22.686745;         // divide RPM by this for velocity
@@ -263,7 +270,7 @@ const float RAIN_BUCKETS_TO_MM = 0.376296;          // multiply bucket tips by t
 
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
 #include "RunningAverageConfig.h"
-unsigned long WIND_MEASUREMENT_INTERVAL = 1000;
+unsigned long WIND_MEASUREMENT_INTERVAL = 1000UL;
 #endif
 
 void wind_speed_irq()

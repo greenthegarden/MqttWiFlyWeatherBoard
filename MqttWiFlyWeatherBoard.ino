@@ -150,6 +150,8 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
+  rfpins_init();                // configure rf pins on wwatherboard as inputs
+  
   delay(2000);                  // use a delay to get things settled before configuring WiFly
 
   // Configure WiFly
@@ -213,6 +215,11 @@ void loop()
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
 #if USE_WIFLY_SLEEP
+    // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
+    // the the RTS pin is driven low.
+    unsigned long rtsMillis = millis();
+    while ((digitalRead(RF_RTS) != LOW) || (millis()-rtsMillis < RTS_TIMEOUT_MILLIS)) { } // do nothing
+    // pin is now low
     wifly_after_wake();
 #endif    
     publish_report();
@@ -232,7 +239,7 @@ void loop()
 
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts
-  static unsigned long windStopped = 0;
+  static unsigned long windStopped = 0UL;
 
   // an interrupt occurred, handle it now
   if (gotWindSpeed) {
