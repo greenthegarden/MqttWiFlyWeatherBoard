@@ -214,19 +214,24 @@ void loop()
 
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
-#if USE_WIFLY_SLEEP
     // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
     // the the RTS pin is driven low.
     unsigned long rtsMillis = millis();
     while ((digitalRead(RF_RTS) != LOW) || (millis()-rtsMillis < RTS_TIMEOUT_MILLIS)) { } // do nothing
-    // pin is now low
-    wifly_after_wake();
-#endif    
-    publish_report();
+    if (digitalRead(RF_RTS == LOW)) {
+      // pin is low => did not timeout
 #if USE_WIFLY_SLEEP
-    wifly_sleep();
+      wifly_after_wake();
 #endif
-    reset_cummulative_measurements();
+      publish_report();
+#if USE_WIFLY_SLEEP
+      wifly_sleep();
+#endif
+      reset_cummulative_measurements();
+    } else {
+      // not sure what to do if timed out!!
+      // unlikely to ever recover
+    }
   }
 
 #if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING

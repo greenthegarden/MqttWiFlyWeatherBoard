@@ -69,8 +69,6 @@ void wifly_init()
   WiFly.begin();
 }
 
-const unsigned long RTS_TIMEOUT_MILLIS = 500UL;
-
 const unsigned long AFTER_WAKE_DELAY   = 2000UL; // milliseconds
 
 void wifly_after_wake()
@@ -81,7 +79,7 @@ void wifly_after_wake()
   WiFly.begin();
 }
 
-const byte NETWORK_CONNECT_ATTEMPTS    = 5;
+const byte NETWORK_CONNECT_ATTEMPTS       = 5;
 
 byte wifly_connect_to_network()
 {
@@ -122,7 +120,9 @@ byte wifly_disconnect_from_network()
 }
 
 #if USE_WIFLY_SLEEP
-const unsigned long WAKE_TIMER_DELTA_SECS  = 20UL;  // seconds early to wake WiFly
+const unsigned long RTS_TIMEOUT_MILLIS    = 500UL;
+
+const unsigned long WAKE_TIMER_DELTA_SECS = 1UL;  // seconds early to wake WiFly
 
 void wifly_sleep()
 {
