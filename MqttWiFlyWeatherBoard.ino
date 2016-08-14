@@ -52,7 +52,7 @@
   4.0 2016/04/19
     Restructured code to improve maintence and align with more recent projects.
   5.0 2016/05/15
-    Added capability to 'sleep' WiFLy module 
+    Added capability to 'sleep' WiFLy module
   5.1 2016/08/10
     Fixed reliability of sleep
 */
@@ -65,7 +65,9 @@
 void publish_measurements(void)
 {
   publish_sht15_measurements();
-  if (pressureSensorStatus) { publish_bmp085_measurements(); }
+  if (pressureSensorStatus) {
+    publish_bmp085_measurements();
+  }
   publish_temt6000_measurement();
 #if ENABLE_WEATHER_METERS
   publish_weather_meter_measurement();
@@ -83,7 +85,7 @@ byte publish_report()
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
-  
+
   if (!wiflyConnectedToNetwork) {
     wifly_connect_to_network();
   }
@@ -135,9 +137,9 @@ void reset_cummulative_measurements()
 
 
 /*--------------------------------------------------------------------------------------
- setup()
- Called by the Arduino framework once, before the main loop begins
- --------------------------------------------------------------------------------------*/
+  setup()
+  Called by the Arduino framework once, before the main loop begins
+  --------------------------------------------------------------------------------------*/
 void setup()
 {
 #if DEBUG_LEVEL > 0
@@ -151,7 +153,7 @@ void setup()
 #endif
 
   rfpins_init();                // configure rf pins on wwatherboard as inputs
-  
+
   delay(2000);                  // use a delay to get things settled before configuring WiFly
 
   // Configure WiFly
@@ -174,7 +176,7 @@ void setup()
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
       progBuffer[0] = '\0';
       strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
-      mqttClient.publish(progBuffer,messBuffer);
+      mqttClient.publish(progBuffer, messBuffer);
     }
   }
 
@@ -201,18 +203,19 @@ void setup()
 #endif
 }
 /*--------------------------------------------------------------------------------------
- end setup()
- --------------------------------------------------------------------------------------*/
+  end setup()
+  --------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------
- loop()
- Arduino main loop
- --------------------------------------------------------------------------------------*/
+  loop()
+  Arduino main loop
+  --------------------------------------------------------------------------------------*/
 void loop()
-{  
+{
   unsigned long currentMillis = millis();
 
 #if USE_WIFLY_SLEEP
+  // use WiFly timer to publish reports
   // WiFly wake monitor
   // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
   // the the RTS pin is driven low.
@@ -220,29 +223,26 @@ void loop()
     // look for RTS pin high
     if (digitalRead(RF_RTS) == HIGH) {
       wiflyAwake = true;
-      wiflyReady = false;
-    }
-    if (wiflyAwake) {
-      if (digitalRead(RF_RTS) == LOW) {
-        wiflyReady = true;
-        wiflySleep = false;
-        wifly_after_wake();
-      }
+      wiflySleep = false;
     }
   }
-#endif
-
+  if (wiflyAwake) {
+    if (digitalRead(RF_RTS) == LOW) {
+      // WiFly now ready
+      wifly_after_wake();
+      publish_report();
+      reset_cummulative_measurements();
+      wifly_sleep();
+    }
+  }
+#else
+  // use arduino timer to publish reports
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
-//    previousMeasurementMillis = currentMillis;
-#if USE_WIFLY_SLEEP
-    wifly_after_wake();
-#endif
+    previousMeasurementMillis = currentMillis;
     publish_report();
-#if USE_WIFLY_SLEEP
-    wifly_sleep();
-#endif
     reset_cummulative_measurements();
   }
+#endif  /* USE_WIFLY_SLEEP */
 
 #if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING
   if (currentMillis - previousWindMeasurementMillis >= WIND_MEASUREMENT_INTERVAL) {
@@ -271,11 +271,11 @@ void loop()
     windRpm = 0;
     windIntCount = 0;
   }
-#endif  // ENABLE_WEATHER_METERS
+#endif  /* ENABLE_WEATHER_METERS */
 }
 /*--------------------------------------------------------------------------------------
- end loop()
- --------------------------------------------------------------------------------------*/
- 
+  end loop()
+  --------------------------------------------------------------------------------------*/
+
 
 
