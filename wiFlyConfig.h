@@ -111,7 +111,6 @@ byte wifly_disconnect_from_network()
 
 #if USE_WIFLY_SLEEP
 boolean wiflySleep = false;
-boolean wiflyReady = false;
 boolean wiflyAwake = false;
 
 const unsigned long AFTER_WAKE_DELAY   = 2000UL; // milliseconds
@@ -138,9 +137,6 @@ void wifly_sleep()
   WiFly.sleep(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
 
   wiflySleep = true;
-
-  // set measurement timer
-  previousMeasurementMillis = millis();
 }
 #endif  /* USE_WIFLY_SLEEP */
 
