@@ -69,10 +69,6 @@ void wifly_init()
   WiFly.begin();
 }
 
-
-#if USE_WIFLY_SLEEP
-#endif
-
 const byte NETWORK_CONNECT_ATTEMPTS       = 5;
 
 byte wifly_connect_to_network()
@@ -114,9 +110,9 @@ byte wifly_disconnect_from_network()
 }
 
 #if USE_WIFLY_SLEEP
-boolean wiflyAfterSleep = false;
-boolean wiflyReady      = false;
-boolean wiflyAwake      = false;
+boolean wiflySleep = false;
+boolean wiflyReady = false;
+boolean wiflyAwake = false;
 
 const unsigned long AFTER_WAKE_DELAY   = 2000UL; // milliseconds
 
@@ -127,8 +123,6 @@ void wifly_after_wake()
   WiFly.disableTimers();
   WiFly.begin();
 }
-
-const unsigned long RTS_TIMEOUT_MILLIS    = 500UL;
 
 const unsigned long WAKE_TIMER_DELTA_SECS = 1UL;  // seconds early to wake WiFly
 
@@ -143,7 +137,10 @@ void wifly_sleep()
 
   WiFly.sleep(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
 
-  wiflyAfterSleep = true;
+  wiflySleep = true;
+
+  // set measurement timer
+  previousMeasurementMillis = millis();
 }
 #endif  /* USE_WIFLY_SLEEP */
 

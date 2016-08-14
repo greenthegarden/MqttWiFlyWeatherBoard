@@ -216,7 +216,7 @@ void loop()
   // WiFly wake monitor
   // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
   // the the RTS pin is driven low.
-  if (wiflyAfterSleep) {
+  if (wiflySleep) {
     // look for RTS pin high
     if (digitalRead(RF_RTS) == HIGH) {
       wiflyAwake = true;
@@ -225,7 +225,7 @@ void loop()
     if (wiflyAwake) {
       if (digitalRead(RF_RTS) == LOW) {
         wiflyReady = true;
-        wiflyAfterSleep = false;
+        wiflySleep = false;
         wifly_after_wake();
       }
     }
@@ -233,7 +233,10 @@ void loop()
 #endif
 
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
-    previousMeasurementMillis = currentMillis;
+//    previousMeasurementMillis = currentMillis;
+#if USE_WIFLY_SLEEP
+    wifly_after_wake();
+#endif
     publish_report();
 #if USE_WIFLY_SLEEP
     wifly_sleep();
