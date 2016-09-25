@@ -10,7 +10,7 @@
 
   In addition, the Wifly-MQTT library from
   https://github.com/greenthegarden/WiFly
-  is used to provide the MQTT interface.
+  is used to provide the MQTT interface via WiFly module.
 */
 
 /*
@@ -21,7 +21,8 @@
   While uploading to code to the Weather Board, remove the WiFly module and
   ensure the Comm switch is set to 'USB'
 
-  Once code is uploaded, before powering up ensure the Comm switch is set to 'RF' and
+  Once code is uploaded, before powering up ensure the Comm switch is set to
+  'RF' and
   WiFly module is re-connected
 */
 
@@ -29,14 +30,13 @@
   Function notes
 
   dtostrf function details
-    dtostrf(floatVar, minStringWidthIncDecimalPoint, numVarsAfterDecimal, charBuf);
+    dtostrf(floatVar, minStringWidthIncDecimalPoint, numVarsAfterDecimal,
+  charBuf);
 
   itoa function details
     char* itoa (int val, char *buf, int radix)
     where radix is the number base, ie. 10
 */
-
-
 
 /*
   Revision history
@@ -47,7 +47,8 @@
     Rewritten to support MQTT and hopefully improve stability!!
   2.1 2015/02/02
     Modified to improve stability
-    based on code from https://github.com/xoseperez/rentalito/blob/master/client/rentalito.ino
+    based on code from
+  https://github.com/xoseperez/rentalito/blob/master/client/rentalito.ino
   3.0 2015/04/24
     Modified to support SunAirPower measurements
     Moved MQTT topic strings to EEPROM to reduce SRAM usage
@@ -59,13 +60,11 @@
     Fixed reliability of sleep
 */
 
-
 #include "debug.h"
 
 #include "config.h"
 
-void publish_measurements(void)
-{
+void publish_measurements(void) {
   publish_sht15_measurements();
   if (pressureSensorStatus) {
     publish_bmp085_measurements();
@@ -82,8 +81,7 @@ void publish_measurements(void)
 #endif
 }
 
-byte publish_report()
-{
+byte publish_report() {
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
@@ -100,52 +98,48 @@ byte publish_report()
 #endif
 
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
+      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[0])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[0])));
       mqttClient.publish(progBuffer, messBuffer);
 
       // publish report start topic
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[2])));
+      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[2])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
 
       publish_measurements();
 
       // publish report end topic
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[3])));
+      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[3])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[3])));
+      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[3])));
       mqttClient.publish(progBuffer, messBuffer);
 
-      mqttClient.disconnect();  // should stop tcp connection
+      mqttClient.disconnect(); // should stop tcp connection
 
       return 1;
-    } else {
-      return 0;
     }
   }
+  return 0;
 }
 
-void reset_cummulative_measurements()
-{
+void reset_cummulative_measurements() {
 #if ENABLE_WEATHER_METERS
-  windRpmMax = 0.0;    // reset to get strongest gust in each measurement period
+  windRpmMax = 0.0; // reset to get strongest gust in each measurement period
 #endif
 }
-
 
 /*--------------------------------------------------------------------------------------
   setup()
   Called by the Arduino framework once, before the main loop begins
   --------------------------------------------------------------------------------------*/
-void setup()
-{
+void setup() {
 #if DEBUG_LEVEL > 0
-  Serial.begin(BAUD_RATE);      // Start hardware serial interface for debugging
+  Serial.begin(BAUD_RATE); // Start hardware serial interface for debugging
 #endif
 
 #if USE_STATUS_LED
@@ -154,9 +148,9 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  rfpins_init();                // configure rf pins on wwatherboard as inputs
+  rfpins_init(); // configure rf pins on wwatherboard as inputs
 
-  delay(2000);                  // use a delay to get things settled before configuring WiFly
+  delay(2000); // use a delay to get things settled before configuring WiFly
 
   // Configure WiFly
   DEBUG_LOG(1, "WiFly");
@@ -175,9 +169,9 @@ void setup()
       digitalWrite(STATUS_LED, LOW);
 #endif
       messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
+      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[0])));
       progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char*)pgm_read_word(&(STATUS_TOPICS[0])));
+      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[0])));
       mqttClient.publish(progBuffer, messBuffer);
     }
   }
@@ -212,8 +206,7 @@ void setup()
   loop()
   Arduino main loop
   --------------------------------------------------------------------------------------*/
-void loop()
-{
+void loop() {
   unsigned long currentMillis = millis();
 
 #if USE_WIFLY_SLEEP
@@ -244,15 +237,16 @@ void loop()
     publish_report();
     reset_cummulative_measurements();
   }
-#endif  /* USE_WIFLY_SLEEP */
+#endif /* USE_WIFLY_SLEEP */
 
 #if ENABLE_WEATHER_METERS && ENABLE_WIND_MEASUREMENT_AVERAGING
-  if (currentMillis - previousWindMeasurementMillis >= WIND_MEASUREMENT_INTERVAL) {
+  if (currentMillis - previousWindMeasurementMillis >=
+      WIND_MEASUREMENT_INTERVAL) {
     previousWindMeasurementMillis = currentMillis;
     wind_spd_avg.addValue(windRpm);
     wind_dir_avg.addValue(get_wind_direction());
   }
-#endif  /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
+#endif /* ENABLE_WEATHER_METERS && ENABLE_WIND_DIR_AVERAGING */
 
 #if ENABLE_WEATHER_METERS
   // handle weather meter interrupts
@@ -265,7 +259,7 @@ void loop()
     if (windRpm > windRpmMax) {
       windRpmMax = windRpm;
     }
-    windStopped = millis() + ZERODELAY;  // save this timestamp
+    windStopped = millis() + ZERODELAY; // save this timestamp
   }
 
   // zero wind speed RPM if a reading does not occur in ZERODELAY ms
@@ -273,11 +267,8 @@ void loop()
     windRpm = 0;
     windIntCount = 0;
   }
-#endif  /* ENABLE_WEATHER_METERS */
+#endif /* ENABLE_WEATHER_METERS */
 }
 /*--------------------------------------------------------------------------------------
   end loop()
   --------------------------------------------------------------------------------------*/
-
-
-
