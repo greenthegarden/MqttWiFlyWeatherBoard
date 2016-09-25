@@ -19,29 +19,29 @@ PubSubClient mqttClient(mqttServerAddr, MQTT_PORT, callback, networkClient);
 
 // MQTT payloads
 const char MQTT_PAYLOAD_CONNECTED[] PROGMEM = "CONNECTED";
+const char MQTT_PAYLOAD_OK[] PROGMEM = "OK";
 const char MQTT_PAYLOAD_ERROR[] PROGMEM = "ERROR";
 const char MQTT_PAYLOAD_START[] PROGMEM = "START";
 const char MQTT_PAYLOAD_END[] PROGMEM = "END";
 const char MQTT_PAYLOAD_SLEEP[] PROGMEM = "SLEEP";
-const char MQTT_PAYLOAD_OK[] PROGMEM = "OK";
 
 PGM_P const MQTT_PAYLOADS[] PROGMEM = {
     MQTT_PAYLOAD_CONNECTED, // idx = 0
-    MQTT_PAYLOAD_ERROR,     // idx = 1
-    MQTT_PAYLOAD_START,     // idx = 2
-    MQTT_PAYLOAD_END,       // idx = 3
-    MQTT_PAYLOAD_SLEEP,     // idx = 4
-    MQTT_PAYLOAD_OK,        // idx = 5
+    MQTT_PAYLOAD_OK,        // idx = 1
+    MQTT_PAYLOAD_ERROR,     // idx = 2
+    MQTT_PAYLOAD_START,     // idx = 3
+    MQTT_PAYLOAD_END,       // idx = 4
+    MQTT_PAYLOAD_SLEEP,     // idx = 5
 };
 
 /* MQTT_PAYLOADS indices, must match table above */
 typedef enum {
   MQTT_PAYLOAD_CONNECTED_IDX = 0,
-  MQTT_PAYLOAD_ERROR_IDX = 1,
-  MQTT_PAYLOAD_START_IDX = 2,
-  MQTT_PAYLOAD_END_IDX = 3,
-  MQTT_PAYLOAD_SLEEP_IDX = 4,
-  MQTT_PAYLOAD_OK_IDX = 5,
+  MQTT_PAYLOAD_OK_IDX = 1,
+  MQTT_PAYLOAD_ERROR_IDX = 2,
+  MQTT_PAYLOAD_START_IDX = 3,
+  MQTT_PAYLOAD_END_IDX = 4,
+  MQTT_PAYLOAD_SLEEP_IDX = 5,
 } mqtt_payloads;
 
 // status topics
