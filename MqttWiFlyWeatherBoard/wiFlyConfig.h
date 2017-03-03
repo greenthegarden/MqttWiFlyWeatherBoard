@@ -9,7 +9,10 @@
 #include <SPI.h>
 #include <WiFly.h>
 
+
+#ifndef USE_WIFLY_SLEEP
 #define USE_WIFLY_SLEEP true
+#endif
 
 #include "networkConfig.h"
 

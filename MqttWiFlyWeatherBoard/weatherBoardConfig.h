@@ -265,7 +265,6 @@ void publish_temt6000_measurement()
 #if ENABLE_WEATHER_METERS
 
 // Global variables
-boolean weatherboard_meters_connected = false;
 const unsigned int ZERODELAY =
     4000; // ms, zero RPM if no result for this time period
 unsigned int windRpm = 0;
@@ -443,7 +442,7 @@ byte weatherboard_meters_connected()
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WEATHER_METERS_STATUS_IDX])));
   payloadBuffer[0] = '\0';
   strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_OK_IDX])));
-  mqttClient.publish(progBuffer, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
   return 1;
 }
 
