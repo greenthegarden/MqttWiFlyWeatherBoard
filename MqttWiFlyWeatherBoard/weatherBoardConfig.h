@@ -49,6 +49,16 @@ PGM_P const BMP085_STATUS_MESSAGES[] PROGMEM = {
     BMP085_ERROR_PRESSURE_GET,   // idx = 5
 };
 
+/* bmp085_status_messages indices, must match table above */
+typedef enum {
+  BMP085_INIT_SUCCESS_IDX = 0,
+  BMP085_INIT_FAILURE_IDX = 1,
+  BMP085_ERROR_TEMP_START_IDX = 2,
+  BMP085_ERROR_TEMP_GET_IDX = 3,
+  BMP085_ERROR_PRESSURE_START_IDX = 4,
+  BMP085_ERROR_PRESSURE_GET_IDX = 5,
+} bmp085_status_messages;
+
 // instantiation of sensor objects
 SHT1x humiditySensor(SHT1x_DATA, SHT1x_CLOCK);
 SFE_BMP085 pressureSensor(BMP_ADDR);
@@ -59,7 +69,8 @@ void rfpins_init() {
   pinMode(RF_RTS, INPUT);
 }
 
-void weatherboard_sensors_init() {
+void weatherboard_sensors_init()
+{
   // Configure sensors
   // set up inputs and outputs
   pinMode(XCLR, OUTPUT);    // output to BMP085 reset (unused)
@@ -85,52 +96,52 @@ void weatherboard_sensors_init() {
     pressureSensorStatus = true;
     // publish BMP085 init success message
     if (mqttClient.connected()) {
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[0])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_SUCCESS_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
     }
   } else {
     // publish BMP085 init failure message
     if (mqttClient.connected()) {
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[1])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_FAILURE_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
     }
   }
 }
 
-void publish_sht15_measurements() {
-  TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit so the SHT15 humidity sensor
-                        // can be accessed
+void publish_sht15_measurements()
+{
+  TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit to allow access to
+                        // the SHT15 humidity sensor
 
   float measurement = 0.0;
 
-  // publish temperature
   measurement =
       humiditySensor
           .readTemperatureC(); // temperature returned in degrees Celcius
-  buf[0] = '\0';
-  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[0])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[SHT15_TEMP_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
-  // publish humidity
   measurement = humiditySensor.readHumidity();
-  buf[0] = '\0';
-  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[1])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[SHT15_HUMIDITY_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 }
 
-void publish_bmp085_measurements() {
-  TWCR |= _BV(TWEN); // turn on I2C enable bit so we can access the BMP085
-                     // pressure sensor
+void publish_bmp085_measurements()
+{
+  TWCR |= _BV(TWEN); // turn on I2C enable bit to allow access to
+                     // the BMP085 pressure sensor
 
   char status;
   double bmp085Temp = 0.0;
@@ -152,11 +163,11 @@ void publish_bmp085_measurements() {
 
     if (status != 0) {
       // publish BMP085 temperature measurement
-      buf[0] = '\0';
-      dtostrf(bmp085Temp, 1, FLOAT_DECIMAL_PLACES, buf);
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[2])));
-      mqttClient.publish(progBuffer, buf);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[BMP085_TEMP_TOPIC_IDX])));
+      payloadBuffer[0] = '\0';
+      dtostrf(bmp085Temp, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+      mqttClient.publish(topicBuffer, payloadBuffer);
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res,
@@ -182,48 +193,49 @@ void publish_bmp085_measurements() {
           // publish BMP085 pressure measurement
           // pressure in millibars (or hectopascal/hPa)
           // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
-          buf[0] = '\0';
-          dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, buf);
-          progBuffer[0] = '\0';
-          strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[3])));
-          mqttClient.publish(progBuffer, buf);
+          topicBuffer[0] = '\0';
+          strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[BMP085_PRESSURE_TOPIC_IDX])));
+          payloadBuffer[0] = '\0';
+          dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+          mqttClient.publish(topicBuffer, payloadBuffer);
         } else {
           // publish pressure get error
-          messBuffer[0] = '\0';
-          strcpy_P(messBuffer,
-                   (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[5])));
-          progBuffer[0] = '\0';
-          strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-          mqttClient.publish(progBuffer, messBuffer);
+          topicBuffer[0] = '\0';
+          strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+          payloadBuffer[0] = '\0';
+          strcpy_P(payloadBuffer,
+                   (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_GET_IDX])));
+          mqttClient.publish(topicBuffer, payloadBuffer);
         }
       } else {
         // publish pressure start error
-        messBuffer[0] = '\0';
-        strcpy_P(messBuffer,
-                 (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[4])));
-        progBuffer[0] = '\0';
-        strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-        mqttClient.publish(progBuffer, messBuffer);
+        topicBuffer[0] = '\0';
+        strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+        payloadBuffer[0] = '\0';
+        strcpy_P(payloadBuffer,
+                 (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_START_IDX])));
+        mqttClient.publish(topicBuffer, payloadBuffer);
       }
     } else {
       // publish temperature get error
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[3])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_GET_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
     }
   } else {
     // publish temperature start error
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[2])));
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[4])));
-    mqttClient.publish(progBuffer, messBuffer);
+    topicBuffer[0] = '\0';
+    strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[BMP085_STATUS_IDX])));
+    payloadBuffer[0] = '\0';
+    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_START_IDX])));
+    mqttClient.publish(topicBuffer, payloadBuffer);
   }
 }
 
-void publish_temt6000_measurement() {
+void publish_temt6000_measurement()
+{
 // get light level
 #if ENABLE_EXTERNAL_LIGHT
   // higher reading corresponds to brighter conditions
@@ -233,26 +245,27 @@ void publish_temt6000_measurement() {
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
 #endif
 
-  buf[0] = '\0';
-  itoa(TEMT6000_light_raw, buf, 10);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[4])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[TEMT6000_LIGHT_RAW_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  itoa(TEMT6000_light_raw, payloadBuffer, 10);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   // convert TEMT6000_light_raw voltage value to percentage
   // map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
 
-  buf[0] = '\0';
-  itoa(TEMT6000_light, buf, 10);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[5])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[TEMT6000_LIGHT_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  itoa(TEMT6000_light, payloadBuffer, 10);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 }
 
 #if ENABLE_WEATHER_METERS
 
 // Global variables
+boolean weatherboard_meters_connected = false;
 const unsigned int ZERODELAY =
     4000; // ms, zero RPM if no result for this time period
 unsigned int windRpm = 0;
@@ -415,28 +428,30 @@ void rain_irq()
   }
 }
 
-byte weatherboard_meters_connected() {
+byte weatherboard_meters_connected()
+{
   if (get_wind_direction() < 0) {
     // likely that weather meters are not conneced
-    messBuffer[0] = '\0';
-    strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[1])));
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[5])));
-    mqttClient.publish(progBuffer, messBuffer);
+    topicBuffer[0] = '\0';
+    strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WEATHER_METERS_STATUS_IDX])));
+    payloadBuffer[0] = '\0';
+    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_ERROR_IDX])));
+    mqttClient.publish(topicBuffer, payloadBuffer);
     return 0;
   }
-  messBuffer[0] = '\0';
-  strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[0])));
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[5])));
-  mqttClient.publish(progBuffer, messBuffer);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WEATHER_METERS_STATUS_IDX])));
+  payloadBuffer[0] = '\0';
+  strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_OK_IDX])));
+  mqttClient.publish(progBuffer, payloadBuffer);
   return 1;
 }
 
-void weatherboard_meters_init() {
+void weatherboard_meters_init()
+{
   // check wind direction measurement which will indicate an error
   // publish an error if not connected
-  weatherboard_meters_connected();
+  if(weatherboard_meters_connected()) {
 
   pinMode(WSPEED, INPUT);     // input from wind meters windspeed sensor
   digitalWrite(WSPEED, HIGH); // turn on pullup
@@ -458,9 +473,11 @@ void weatherboard_meters_init() {
   // attach external interrupt pins to IRQ functions
   attachInterrupt(0, rain_irq, FALLING);
   attachInterrupt(1, wind_speed_irq, FALLING);
+  }
 }
 
-void publish_windspeed_measurement() {
+void publish_windspeed_measurement()
+{
   float windSpeedMeasurement = -1.0; // this value should never be published
 // publish instantaneous wind speed
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
@@ -468,22 +485,23 @@ void publish_windspeed_measurement() {
 #else
   windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
 #endif
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[6])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[WIND_SPEED_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   // publish maximum wind speed since last report
   windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
-  buf[0] = '\0';
-  dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[7])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[WIND_SPEED_MAX_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 }
 
-byte publish_wind_direction_measurement() {
+byte publish_wind_direction_measurement()
+{
   float WM_wdirection = -1.0;
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
   WM_wdirection = wind_dir_avg.getAverage();
@@ -492,32 +510,34 @@ byte publish_wind_direction_measurement() {
   WM_wdirection = get_wind_direction(); // should return a -1 if disconnected
 #endif
   if (WM_wdirection >= 0) {
-    buf[0] = '\0';
-    dtostrf(WM_wdirection, 1, FLOAT_DECIMAL_PLACES, buf);
-    progBuffer[0] = '\0';
-    strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[8])));
-    mqttClient.publish(progBuffer, buf);
+    topicBuffer[0] = '\0';
+    strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[WIND_DIRECTION_TOPIC_IDX])));
+    payloadBuffer[0] = '\0';
+    dtostrf(WM_wdirection, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+    mqttClient.publish(topicBuffer, payloadBuffer);
     return 1;
   } else {
     return 0;
   }
 }
 
-void publish_rainfall_measurement() {
+void publish_rainfall_measurement()
+{
   // rainfall unit conversion
   float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
 
-  buf[0] = '\0';
-  dtostrf(rainfallMeasurement, 1, FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[9])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[RAINFALL_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(rainfallMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   // reset value of rain to zero
   rain = 0;
 }
 
-void publish_weather_meter_measurement() {
+void publish_weather_meter_measurement()
+{
   // take wind-direction measurement first
   // if returns -1 then treat as sensors not connected
   if (weatherboard_meters_connected()) {

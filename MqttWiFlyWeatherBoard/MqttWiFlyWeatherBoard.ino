@@ -97,27 +97,27 @@ byte publish_report() {
       digitalWrite(STATUS_LED, LOW);
 #endif
 
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[0])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[0])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WIFLY_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_CONNECTED_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
 
       // publish report start topic
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[2])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[3])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_START_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
 
       publish_measurements();
 
       // publish report end topic
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[3])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[3])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_END_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
 
       mqttClient.disconnect(); // should stop tcp connection
 
@@ -148,7 +148,7 @@ void setup() {
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  rfpins_init(); // configure rf pins on wwatherboard as inputs
+  rfpins_init(); // configure rf pins on weatherboard as inputs
 
   delay(2000); // use a delay to get things settled before configuring WiFly
 
@@ -168,11 +168,11 @@ void setup() {
 #if USE_STATUS_LED
       digitalWrite(STATUS_LED, LOW);
 #endif
-      messBuffer[0] = '\0';
-      strcpy_P(messBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[0])));
-      progBuffer[0] = '\0';
-      strcpy_P(progBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[0])));
-      mqttClient.publish(progBuffer, messBuffer);
+      topicBuffer[0] = '\0';
+      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WIFLY_STATUS_IDX])));
+      payloadBuffer[0] = '\0';
+      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_CONNECTED_IDX])));
+      mqttClient.publish(topicBuffer, payloadBuffer);
     }
   }
 

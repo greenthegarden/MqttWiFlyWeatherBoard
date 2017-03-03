@@ -4,13 +4,10 @@
 #include "debug.h"
 
 const byte BUFFER_SIZE = 42;
-char progBuffer[BUFFER_SIZE];
-char messBuffer[BUFFER_SIZE];
+char topicBuffer[BUFFER_SIZE];
+char payloadBuffer[BUFFER_SIZE];
 
 const byte FLOAT_DECIMAL_PLACES = 1;
-
-// character buffer to support conversion of floats to char
-char buf[12];
 
 // Serial parameters
 const int BAUD_RATE = 9600;
@@ -25,10 +22,6 @@ unsigned long previousMeasurementMillis = 0UL;
 unsigned long previousWindMeasurementMillis = 0UL;
 
 #include "wiFlyConfig.h"
-
-#ifndef ENABLE_JSON_OUTPUT
-#define ENABLE_JSON_OUTPUT false
-#endif
 
 #include "mqttConfig.h"
 

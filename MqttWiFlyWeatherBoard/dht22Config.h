@@ -1,7 +1,7 @@
 #ifndef MQTTWIFLYWEATHERBOARD_DHT22CONFIG_H_
 #define MQTTWIFLYWEATHERBOARD_DHT22CONFIG_H_
 
-#include "DHT22Config.h" // DHT22 temperature/humidty sensor library
+#include <DHT22Config.h>
 
 const int DHT22_PIN = 11;
 
