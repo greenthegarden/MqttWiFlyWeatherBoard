@@ -56,8 +56,8 @@ SFE_BMP085 pressureSensor(BMP_ADDR);
 
 void rfpins_init()
 {
-  // configure CTS and RTS pins as inputs
-  pinMode(RF_CTS, INPUT);
+  // configure CTS and RTS pins
+//  pinMode(RF_CTS, OUTPUT);
   pinMode(RF_RTS, INPUT);
 }
 

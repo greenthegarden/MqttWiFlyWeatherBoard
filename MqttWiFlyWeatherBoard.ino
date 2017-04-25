@@ -82,6 +82,7 @@ void publish_measurements(void)
 
 byte publish_report()
 {
+  #if 0
 #if USE_STATUS_LED
   digitalWrite(STATUS_LED, HIGH);
 #endif
@@ -120,12 +121,16 @@ byte publish_report()
       mqttClient.publish(progBuffer, messBuffer);
 
       mqttClient.disconnect();  // should stop tcp connection
-
+      while (mqttClient.state() != MQTT_DISCONNECTED) { }
+      
       return 1;
     } else {
       return 0;
     }
   }
+  #else
+  DEBUG_LOG(1,"REPORT");
+  #endif
 }
 
 void reset_cummulative_measurements()
@@ -152,7 +157,7 @@ void setup()
   digitalWrite(STATUS_LED, LOW);
 #endif
 
-  rfpins_init();                // configure rf pins on wwatherboard as inputs
+  rfpins_init();                // configure rf pins on weatherboard
 
   delay(2000);                  // use a delay to get things settled before configuring WiFly
 
@@ -164,13 +169,13 @@ void setup()
   wifly_connect_to_network();
 
 #if USE_STATUS_LED
-  digitalWrite(STATUS_LED, HIGH);
+//  digitalWrite(STATUS_LED, HIGH);
 #endif
 
   if (wiflyConnectedToNetwork) {
     if (mqttClient.connect(mqttClientId)) {
 #if USE_STATUS_LED
-      digitalWrite(STATUS_LED, LOW);
+ //     digitalWrite(STATUS_LED, LOW);
 #endif
       messBuffer[0] = '\0';
       strcpy_P(messBuffer, (char*)pgm_read_word(&(MQTT_PAYLOADS[0])));
@@ -180,7 +185,7 @@ void setup()
     }
   }
 
-  weatherboard_sensors_init();
+//  weatherboard_sensors_init();
 
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_init();
@@ -196,6 +201,7 @@ void setup()
   if (wiflyConnectedToNetwork) {
     if (mqttClient.connected())
       mqttClient.disconnect();
+      while (mqttClient.state() != MQTT_DISCONNECTED) { }
   }
 
 #if USE_WIFLY_SLEEP
@@ -213,8 +219,13 @@ void setup()
 void loop()
 {
   unsigned long currentMillis = millis();
-
-#if USE_WIFLY_SLEEP
+  
+    if (digitalRead(RF_RTS) == HIGH) {
+      digitalWrite(STATUS_LED, HIGH);
+    }
+ 
+#if 0
+//#if USE_WIFLY_SLEEP
   // use WiFly timer to publish reports
   // WiFly wake monitor
   // When the WiFly wakes up, the RTS pin goes high. Once the module is ready,
@@ -222,6 +233,10 @@ void loop()
   if (wiflySleep) {
     // look for RTS pin high
     if (digitalRead(RF_RTS) == HIGH) {
+#if USE_STATUS_LED
+//      digitalWrite(STATUS_LED, HIGH);
+#endif
+      DEBUG_LOG(1, "wiflyAwake");
       wiflyAwake = true;
       wiflySleep = false;
     }
@@ -229,6 +244,10 @@ void loop()
   if (wiflyAwake) {
     if (digitalRead(RF_RTS) == LOW) {
       // WiFly now ready
+#if USE_STATUS_LED
+//      digitalWrite(STATUS_LED, LOW);
+#endif
+      DEBUG_LOG(1, "wiflyReady");
       wifly_after_wake();
       publish_report();
       reset_cummulative_measurements();

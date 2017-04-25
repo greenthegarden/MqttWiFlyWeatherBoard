@@ -113,11 +113,8 @@ byte wifly_disconnect_from_network()
 boolean wiflySleep = false;
 boolean wiflyAwake = false;
 
-const unsigned long AFTER_WAKE_DELAY   = 2000UL; // milliseconds
-
 void wifly_after_wake()
 {
-//  delay(AFTER_WAKE_DELAY);
   DEBUG_LOG(1, "after waking");
   WiFly.disableTimers();
   WiFly.begin();
@@ -128,14 +125,9 @@ const unsigned long WAKE_TIMER_DELTA_SECS = 1UL;  // seconds early to wake WiFly
 void wifly_sleep()
 {
   DEBUG_LOG(1, "sleeping wifly");
-
   // close tcp connection
   wifly_disconnect_from_network();
-
-  delay(500);
-
   WiFly.sleep(MEASUREMENT_INTERVAL_SECS - WAKE_TIMER_DELTA_SECS);
-
   wiflySleep = true;
 }
 #endif  /* USE_WIFLY_SLEEP */
