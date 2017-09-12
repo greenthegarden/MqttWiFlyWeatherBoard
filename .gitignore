@@ -1,4 +1,4 @@
-# files with private access keys to prevent uploading to git
-networkConfig.h
-python/weatherPublisher.cfg
-
+.pioenvs
+.clang_complete
+.gcc-flags.json
+.piolibdeps

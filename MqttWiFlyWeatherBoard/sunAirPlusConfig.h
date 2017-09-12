@@ -12,7 +12,7 @@ SDL_Arduino_INA3221 ina3221;
 #define SOLAR_CELL_CHANNEL      2
 #define OUTPUT_CHANNEL          3
 
-// sunairplus measurement topics 
+// sunairplus measurement topics
 
 const char BATTERY_VOLTAGE_TOPIC[]    PROGMEM = "weather/sunairplus/battery_voltage";
 const char BATTERY_CURRENT_TOPIC[]    PROGMEM = "weather/sunairplus/battery_current";
@@ -47,50 +47,50 @@ void publish_sunairplus_measurement()
   //LIPO battery measurements
 
   measurement = ina3221.getBusVoltage_V(LIPO_BATTERY_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[BATTERY_VOLTAGE_TOPIC_IDX])));
-  mqttClient.publish(progBuffer, buf);
-  
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[BATTERY_VOLTAGE_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
+
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[1])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[BATTERY_CURRENT_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   // Solar cell measurements
-  
+
   measurement = ina3221.getBusVoltage_V(SOLAR_CELL_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[2])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[SOLAR_VOLTAGE_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[3])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[SOLAR_CURRENT_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   // SunAirPlus output measurements
 
   measurement = ina3221.getBusVoltage_V(OUTPUT_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[4])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[OUTPUT_VOLTAGE_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 
   measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
-  buf[0] = '\0';
-  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, buf);
-  progBuffer[0] = '\0';
-  strcpy_P(progBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[5])));
-  mqttClient.publish(progBuffer, buf);
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char*)pgm_read_word(&(SUNAIRPLUS_TOPICS[OUTPUT_CURRENT_TOPIC_IDX])));
+  payloadBuffer[0] = '\0';
+  dtostrf(measurement,1,FLOAT_DECIMAL_PLACES, payloadBuffer);
+  mqttClient.publish(topicBuffer, payloadBuffer);
 }
 
 
