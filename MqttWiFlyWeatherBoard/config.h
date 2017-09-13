@@ -6,13 +6,13 @@
 // define buffers
 #if ENABLE_JSON
 #include <ArduinoJson.h>
-const byte JSON_BUFFER_SIZE = 42;
+const byte JSON_BUFFER_SIZE = 200;
 //StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
 #endif
 const byte TOPIC_BUFFER_SIZE = 42;
-char topicBuffer[TOPIC_BUFFER_SIZE];
-const byte PAYLOAD_BUFFER_SIZE = 42;
-char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+// char topicBuffer[TOPIC_BUFFER_SIZE];
+const byte PAYLOAD_BUFFER_SIZE = JSON_BUFFER_SIZE;
+// char payloadBuffer[PAYLOAD_BUFFER_SIZE];
 
 const byte FLOAT_DECIMAL_PLACES = 1;
 
@@ -20,7 +20,7 @@ const byte FLOAT_DECIMAL_PLACES = 1;
 const int BAUD_RATE = 9600;
 
 // program constants
-const unsigned long MEASUREMENT_INTERVAL_SECS = 10UL;
+const unsigned long MEASUREMENT_INTERVAL_SECS = 30UL;
 const unsigned long MEASUREMENT_INTERVAL =
     MEASUREMENT_INTERVAL_SECS * 1000UL; // conversion to milliseconds
 

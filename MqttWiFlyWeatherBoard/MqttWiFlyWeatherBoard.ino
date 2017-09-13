@@ -161,8 +161,10 @@ void setup() {
 
 //  rfpins_init();                // configure rf pins on weatherboard
 
+  Serial.println("Welcome to the weather");
+
   weatherboard_sensors_init();
-  
+
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_init();
 
@@ -173,8 +175,6 @@ void setup() {
 #if ENABLE_POWER_MONITOR
   ina3221.begin();
 #endif
-
-  Serial.println("Welcome to the weather");
 
 }
 /*--------------------------------------------------------------------------------------

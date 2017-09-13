@@ -75,8 +75,8 @@ typedef enum {
 
 // BMP085 status messages
 
-const char BMP085_INIT_SUCCESS[] PROGMEM = "INIT: Success";
-const char BMP085_INIT_FAILURE[] PROGMEM = "INIT: Failure";
+const char BMP085_INIT_SUCCESS[] PROGMEM = "Success";
+const char BMP085_INIT_FAILURE[] PROGMEM = "Failure";
 const char BMP085_ERROR_TEMP_START[] PROGMEM = "ERROR: Temperature Start";
 const char BMP085_ERROR_TEMP_GET[] PROGMEM = "ERROR: Temperature Get";
 const char BMP085_ERROR_PRESSURE_START[] PROGMEM = "ERROR: Pressure Start";
@@ -133,24 +133,24 @@ void weatherboard_sensors_init()
   delay(10); // wait for the BMP085 pressure sensor to become ready after reset
 
   // init BMP085 pressure sensor and publish result
-  topicBuffer[0] = '\0';
+  char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-  payloadBuffer[0] = '\0';
 
+  char charBuffer[12];
   if (pressureSensor.begin()) { // initialize the BMP085 pressure sensor
                                 // (important to get calibration values stored
                                 // on the device)
     pressureSensorStatus = true;
-    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_SUCCESS_IDX])));
+    strcpy_P(charBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_SUCCESS_IDX])));
   } else {
-    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_FAILURE_IDX])));
+    strcpy_P(charBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_FAILURE_IDX])));
   }
   root[F("sensor")] = F("bmp085");
-  root[F("init")] = payloadBuffer;
+  root[F("init")] = charBuffer;
 
-  payloadBuffer[0] = '\0';
+  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
   root.printTo(payloadBuffer);
   #if ENABLE_MQTT
   if (mqttClient.connected()) {
@@ -161,6 +161,7 @@ void weatherboard_sensors_init()
   #endif
 }
 
+#if 0
 void publish_sht15_measurements()
 {
   TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit to allow access to
@@ -652,5 +653,6 @@ void publish_weather_meter_measurement()
 }
 
 #endif /* ENABLE_WEATHER_METERS */
+#endif
 
 #endif /* MQTTWIFLYWEATHERBOARD_WEATHERBOARDCONFIG_H_ */
