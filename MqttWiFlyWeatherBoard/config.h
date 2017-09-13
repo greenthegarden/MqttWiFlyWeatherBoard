@@ -30,13 +30,19 @@ typedef enum {
 #define COMMUNICATION_METHOD COMM_SERIAL
 #endif
 
-#if COMMUNICATION_METHOD==COMM_WIFLY
-//  #include "wiFlyConfig.h"
-//  #include "mqttConfig.h"
-  #define ENABLE_MQTT true
+#ifndef COMMUNICATION_METHOD
+  #define ENABLE_MQTT 0
+#elif COMMUNICATION_METHOD == COMM_SERIAL
+  #define ENABLE_MQTT 0
+#elif COMMUNICATION_METHOD == COMM_WIFLY
+  #include "wiFlyConfig.h"
+  #include "mqttConfig.h"
+  #define ENABLE_MQTT 1
 #else
-  #define ENABLE_MQTT false
+  #error "Unexpected value of COMMUNICATION_METHOD"
 #endif
+
+#define ENABLE_MQTT 0
 
 void printTopicPayloadPair(const char* topic, const char* payload) {
   Serial.print(topic);
@@ -80,31 +86,19 @@ void printTopicPayloadPair(const char* topic, const char* payload) {
 //#include "dht22Config.h"
 #endif
 
-// PROGMEM_STRINGS
-const char PROGMEM_STRING_CONNECTED[] PROGMEM = "CONNECTED";
-const char PROGMEM_STRING_OK[] PROGMEM = "OK";
-const char PROGMEM_STRING_ERROR[] PROGMEM = "ERROR";
-const char PROGMEM_STRING_START[] PROGMEM = "START";
-const char PROGMEM_STRING_END[] PROGMEM = "END";
-const char PROGMEM_STRING_SLEEP[] PROGMEM = "SLEEP";
+#include "progmemStrings.h"
 
-PGM_P const PROGMEM_STRINGS[] PROGMEM = {
-    PROGMEM_STRING_CONNECTED, // idx = 0
-    PROGMEM_STRING_OK,        // idx = 1
-    PROGMEM_STRING_ERROR,     // idx = 2
-    PROGMEM_STRING_START,     // idx = 3
-    PROGMEM_STRING_END,       // idx = 4
-    PROGMEM_STRING_SLEEP,     // idx = 5
+// status topics
+const char WIFLY_STATUS[] PROGMEM = "weather/status/wifly";
+const char BATTERY_STATUS[] PROGMEM = "weather/status/battery";
+const char MEMORY_STATUS[] PROGMEM = "weather/status/memory";
+const char REPORT_STATUS[] PROGMEM = "weather/status/report";
+
+PGM_P const STATUS_TOPICS[] PROGMEM = {
+    WIFLY_STATUS,          // idx = 0
+    BATTERY_STATUS,        // idx = 1
+    MEMORY_STATUS,         // idx = 2
+    REPORT_STATUS,         // idx = 3
 };
-
-/* PROGMEM_STRINGS indices, must match table above */
-typedef enum {
-  PROGMEM_STRING_CONNECTED_IDX = 0,
-  PROGMEM_STRING_OK_IDX = 1,
-  PROGMEM_STRING_ERROR_IDX = 2,
-  PROGMEM_STRING_START_IDX = 3,
-  PROGMEM_STRING_END_IDX = 4,
-  PROGMEM_STRING_SLEEP_IDX = 5,
-} progmem_strings;
 
 #endif /* MQTTWIFLYWEATHERBOARD_CONFIG_H_ */

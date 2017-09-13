@@ -22,6 +22,8 @@ byte dht22_measurement() {
     if (mqttClient.connected()) {
       mqttClient.publish(progBuffer, messBuffer);
     }
+    #else
+    printTopicPayloadPair(topicBuffer, payloadBuffer);
     #endif
     break;
   case DHTLIB_ERROR_CHECKSUM:
@@ -33,6 +35,8 @@ byte dht22_measurement() {
     if (mqttClient.connected()) {
       mqttClient.publish(progBuffer, messBuffer);
     }
+    #else
+    printTopicPayloadPair(topicBuffer, payloadBuffer);
     #endif
     break;
   case DHTLIB_ERROR_TIMEOUT:
@@ -44,6 +48,8 @@ byte dht22_measurement() {
                              if (mqttClient.connected()) {
                                mqttClient.publish(progBuffer, messBuffer);
                              }
+                             #else
+                             printTopicPayloadPair(topicBuffer, payloadBuffer);
                              #endif
     break;
   case DHTLIB_ERROR_CONNECT:
@@ -55,6 +61,8 @@ byte dht22_measurement() {
                              if (mqttClient.connected()) {
                                mqttClient.publish(progBuffer, messBuffer);
                              }
+                             #else
+                             printTopicPayloadPair(topicBuffer, payloadBuffer);
                              #endif
     break;
   case DHTLIB_ERROR_ACK_L:
@@ -66,6 +74,8 @@ byte dht22_measurement() {
                              if (mqttClient.connected()) {
                                mqttClient.publish(progBuffer, messBuffer);
                              }
+                             #else
+                             printTopicPayloadPair(topicBuffer, payloadBuffer);
                              #endif
     break;
   case DHTLIB_ERROR_ACK_H:
@@ -77,6 +87,8 @@ byte dht22_measurement() {
                              if (mqttClient.connected()) {
                                mqttClient.publish(progBuffer, messBuffer);
                              }
+                             #else
+                             printTopicPayloadPair(topicBuffer, payloadBuffer);
                              #endif
     break;
   default:
@@ -88,6 +100,8 @@ byte dht22_measurement() {
                              if (mqttClient.connected()) {
                                mqttClient.publish(progBuffer, messBuffer);
                              }
+                             #else
+                             printTopicPayloadPair(topicBuffer, payloadBuffer);
                              #endif
     break;
   }
@@ -106,6 +120,8 @@ void publish_dht22_temperature_measurement() {
   if (mqttClient.connected()) {
     mqttClient.publish(progBuffer, buf);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
 }
 
@@ -121,6 +137,8 @@ void publish_dht22_humidity_measurement() {
   if (mqttClient.connected()) {
     mqttClient.publish(progBuffer, buf);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
 }
 
