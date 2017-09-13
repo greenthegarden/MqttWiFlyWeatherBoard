@@ -49,55 +49,29 @@ typedef enum {
   DHT22_STATUS_IDX = 2,
 } sensor_status_topics;
 
-// sensor measurement topics
-const char SHT15_TEMP_TOPIC[] PROGMEM = "weather/measurement/SHT15_temp";
-const char SHT15_HUMIDITY_TOPIC[] PROGMEM =
-    "weather/measurement/SHT15_humidity";
-const char BMP085_TEMP_TOPIC[] PROGMEM = "weather/measurement/BMP085_temp";
-const char BMP085_PRESSURE_TOPIC[] PROGMEM =
-    "weather/measurement/BMP085_pressure";
-const char TEMT6000_LIGHT_RAW_TOPIC[] PROGMEM =
-    "weather/measurement/TEMT6000_light_raw";
-const char TEMT6000_LIGHT_TOPIC[] PROGMEM =
-    "weather/measurement/TEMT6000_light";
-const char WIND_SPEED_TOPIC[] PROGMEM = "weather/measurement/wind_spd";
-const char WIND_SPEED_MAX_TOPIC[] PROGMEM = "weather/measurement/wind_spd_max";
-const char WIND_DIRECTION_TOPIC[] PROGMEM = "weather/measurement/wind_dir";
-const char RAINFALL_TOPIC[] PROGMEM = "weather/measurement/rain";
-const char DHT22_TEMP_TOPIC[] PROGMEM = "weather/measurement/DHT22_temp";
-const char DHT22_HUMIDITY_TOPIC[] PROGMEM =
-    "weather/measurement/DHT22_humidity";
+// sensor topics
+const char SENSOR_SHT15_TOPIC[] PROGMEM = "weather/sensor/SHT15";
+const char SENSOR_BMP085_TOPIC[] PROGMEM = "weather/sensor/BMP085";
+const char SENSOR_TEMT6000_TOPIC[] PROGMEM = "weather/sensor/TEMT6000";
+const char SENSOR_WIND_TOPIC[] PROGMEM = "weather/sensor/wind";
+const char SENSOR_RAINFALL_TOPIC[] PROGMEM = "weather/sensor/rainfall";
 
-PGM_P const SENSOR_MEASUREMENT_TOPICS[] PROGMEM = {
-    SHT15_TEMP_TOPIC,         // idx = 0
-    SHT15_HUMIDITY_TOPIC,     // idx = 1
-    BMP085_TEMP_TOPIC,        // idx = 2
-    BMP085_PRESSURE_TOPIC,    // idx = 3
-    TEMT6000_LIGHT_RAW_TOPIC, // idx = 4
-    TEMT6000_LIGHT_TOPIC,     // idx = 5
-    WIND_SPEED_TOPIC,         // idx = 6
-    WIND_SPEED_MAX_TOPIC,     // idx = 7
-    WIND_DIRECTION_TOPIC,     // idx = 8
-    RAINFALL_TOPIC,           // idx = 9
-    DHT22_TEMP_TOPIC,         // idx = 10
-    DHT22_HUMIDITY_TOPIC,     // idx = 11
+PGM_P const SENSOR_TOPICS[] PROGMEM = {
+    SENSOR_SHT15_TOPIC,         // idx = 0
+    SENSOR_BMP085_TOPIC,     // idx = 1
+    SENSOR_TEMT6000_TOPIC,        // idx = 2
+    SENSOR_WIND_TOPIC,    // idx = 3
+    SENSOR_RAINFALL_TOPIC, // idx = 4
 };
 
-// SENSOR_MEASUREMENT_TOPICS indices, must match table above
+// SENSOR_TOPICS indices, must match table above
 typedef enum {
-  SHT15_TEMP_TOPIC_IDX = 0,
-  SHT15_HUMIDITY_TOPIC_IDX = 1,
-  BMP085_TEMP_TOPIC_IDX = 2,
-  BMP085_PRESSURE_TOPIC_IDX = 3,
-  TEMT6000_LIGHT_RAW_TOPIC_IDX = 4,
-  TEMT6000_LIGHT_TOPIC_IDX = 5,
-  WIND_SPEED_TOPIC_IDX = 6,
-  WIND_SPEED_MAX_TOPIC_IDX = 7,
-  WIND_DIRECTION_TOPIC_IDX = 8,
-  RAINFALL_TOPIC_IDX = 9,
-  DHT22_TEMP_TOPIC_IDX = 10,
-  DHT22_HUMIDITY_TOPIC_IDX = 11,
-} sensor_measurement_topics;
+  SENSOR_SHT15_TOPIC_IDX = 0,
+  SENSOR_BMP085_TOPIC_IDX = 1,
+  SENSOR_TEMT6000_TOPIC_IDX = 2,
+  SENSOR_WIND_TOPIC_IDX = 3,
+  SENSOR_RAINFALL_TOPIC_IDX = 4,
+} sensor_topics;
 
 // BMP085 status messages
 
@@ -158,52 +132,26 @@ void weatherboard_sensors_init()
   digitalWrite(XCLR, HIGH); // enable BMP085
   delay(10); // wait for the BMP085 pressure sensor to become ready after reset
 
+  // init BMP085 pressure sensor and publish result
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  payloadBuffer[0] = '\0';
+
   if (pressureSensor.begin()) { // initialize the BMP085 pressure sensor
                                 // (important to get calibration values stored
                                 // on the device)
     pressureSensorStatus = true;
-    // publish BMP085 init success message
-    topicBuffer[0] = '\0';
-    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
-    payloadBuffer[0] = '\0';
     strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_SUCCESS_IDX])));
-    #if ENABLE_MQTT
-    if (mqttClient.connected()) {
-      mqttClient.publish(topicBuffer, payloadBuffer);
-    }
-    #else
-    printTopicPayloadPair(topicBuffer, payloadBuffer);
-    #endif
   } else {
-    // publish BMP085 init failure message
-    topicBuffer[0] = '\0';
-    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
-    payloadBuffer[0] = '\0';
     strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_INIT_FAILURE_IDX])));
-    #if ENABLE_MQTT
-    if (mqttClient.connected()) {
-      mqttClient.publish(topicBuffer, payloadBuffer);
-    }
-    #else
-    printTopicPayloadPair(topicBuffer, payloadBuffer);
-    #endif
   }
-}
+  root[F("sensor")] = F("bmp085");
+  root[F("init")] = payloadBuffer;
 
-void publish_sht15_measurements()
-{
-  TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit to allow access to
-                        // the SHT15 humidity sensor
-
-  float measurement = 0.0;
-
-  measurement =
-      humiditySensor
-          .readTemperatureC(); // temperature returned in degrees Celcius
-  topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[SHT15_TEMP_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
-  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  root.printTo(payloadBuffer);
   #if ENABLE_MQTT
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
@@ -211,12 +159,30 @@ void publish_sht15_measurements()
   #else
   printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
+}
+
+void publish_sht15_measurements()
+{
+  TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit to allow access to
+                        // the SHT15 humidity sensor
+
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_SHT15_TOPIC_IDX])));
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root[F("sensor")] = F("sht15");
+
+  float measurement = 0.0;
+
+  // humidity reading
+  measurement = humiditySensor.readTemperatureC(); // temperature returned in degrees Celcius
+  root[F("temp")] = measurement;
 
   measurement = humiditySensor.readHumidity();
-  topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[SHT15_HUMIDITY_TOPIC_IDX])));
+  root[F("hum")] = measurement;
+
   payloadBuffer[0] = '\0';
-  dtostrf(measurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
+  root.printTo(payloadBuffer);
   #if ENABLE_MQTT
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
@@ -230,6 +196,12 @@ void publish_bmp085_measurements()
 {
   TWCR |= _BV(TWEN); // turn on I2C enable bit to allow access to
                      // the BMP085 pressure sensor
+
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root[F("sensor")] = F("bmp085");
 
   char status;
   double bmp085Temp = 0.0;
@@ -246,22 +218,13 @@ void publish_bmp085_measurements()
 
     // retrieve BMP085 temperature reading
     // function returns 1 if successful, 0 if failure
-    status = pressureSensor.getTemperature(
-        &bmp085Temp); // temperature returned in degrees Celcius
+    status = pressureSensor.getTemperature(&bmp085Temp); // temperature returned in degrees Celcius
 
     if (status != 0) {
       // publish BMP085 temperature measurement
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[BMP085_TEMP_TOPIC_IDX])));
       payloadBuffer[0] = '\0';
       dtostrf(bmp085Temp, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
-      #if ENABLE_MQTT
-      if (mqttClient.connected()) {
-        mqttClient.publish(topicBuffer, payloadBuffer);
-      }
-      #else
-      printTopicPayloadPair(topicBuffer, payloadBuffer);
-      #endif
+      root[F("temp")] = payloadBuffer;
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res,
@@ -287,79 +250,54 @@ void publish_bmp085_measurements()
           // publish BMP085 pressure measurement
           // pressure in millibars (or hectopascal/hPa)
           // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
-          topicBuffer[0] = '\0';
-          strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[BMP085_PRESSURE_TOPIC_IDX])));
           payloadBuffer[0] = '\0';
           dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
-          #if ENABLE_MQTT
-          if (mqttClient.connected()) {
-            mqttClient.publish(topicBuffer, payloadBuffer);
-          }
-          #else
-          printTopicPayloadPair(topicBuffer, payloadBuffer);
-          #endif
+          root[F("pres")] = payloadBuffer;
         } else {
           // publish pressure get error
-          topicBuffer[0] = '\0';
-          strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
           payloadBuffer[0] = '\0';
           strcpy_P(payloadBuffer,
                    (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_GET_IDX])));
-          #if ENABLE_MQTT
-          if (mqttClient.connected()) {
-            mqttClient.publish(topicBuffer, payloadBuffer);
-          }
-          #else
-          printTopicPayloadPair(topicBuffer, payloadBuffer);
-          #endif
+          root[F("err")] = payloadBuffer;
         }
       } else {
         // publish pressure start error
-        topicBuffer[0] = '\0';
-        strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
         payloadBuffer[0] = '\0';
         strcpy_P(payloadBuffer,
                  (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_START_IDX])));
-        #if ENABLE_MQTT
-        if (mqttClient.connected()) {
-          mqttClient.publish(topicBuffer, payloadBuffer);
-        }
-        #else
-        printTopicPayloadPair(topicBuffer, payloadBuffer);
-        #endif
+        root[F("err")] = payloadBuffer;
       }
     } else {
       // publish temperature get error
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
       payloadBuffer[0] = '\0';
       strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_GET_IDX])));
-      #if ENABLE_MQTT
-      if (mqttClient.connected()) {
-        mqttClient.publish(topicBuffer, payloadBuffer);
-      }
-      #else
-      printTopicPayloadPair(topicBuffer, payloadBuffer);
-      #endif
+      root[F("err")] = payloadBuffer;
     }
   } else {
     // publish temperature start error
-    topicBuffer[0] = '\0';
-    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[BMP085_STATUS_IDX])));
     payloadBuffer[0] = '\0';
     strcpy_P(payloadBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_START_IDX])));
-    #if ENABLE_MQTT
-    if (mqttClient.connected()) {
-      mqttClient.publish(topicBuffer, payloadBuffer);
-    }
-    #else
-    printTopicPayloadPair(topicBuffer, payloadBuffer);
-    #endif
+    root[F("err")] = payloadBuffer;
   }
+  payloadBuffer[0] = '\0';
+  root.printTo(payloadBuffer);
+  #if ENABLE_MQTT
+  if (mqttClient.connected()) {
+    mqttClient.publish(topicBuffer, payloadBuffer);
+  }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
+  #endif
 }
 
 void publish_temt6000_measurement()
 {
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_TEMT6000_TOPIC_IDX])));
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root[F("sensor")] = F("temt6000");
+
 // get light level
 #if ENABLE_EXTERNAL_LIGHT
   // higher reading corresponds to brighter conditions
@@ -369,25 +307,19 @@ void publish_temt6000_measurement()
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
 #endif
 
-  topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[TEMT6000_LIGHT_RAW_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
   itoa(TEMT6000_light_raw, payloadBuffer, 10);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+  root[F("raw")] = payloadBuffer;
+
   // convert TEMT6000_light_raw voltage value to percentage
   // map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
-
-  topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[TEMT6000_LIGHT_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
   itoa(TEMT6000_light, payloadBuffer, 10);
+  root[F("level")] = payloadBuffer;
+
+  payloadBuffer[0] = '\0';
+  root.printTo(payloadBuffer);
   #if ENABLE_MQTT
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
@@ -564,12 +496,16 @@ void rain_irq()
 
 byte weatherboard_meters_connected()
 {
+  topicBuffer[0] = '\0';
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_WIND_TOPIC_IDX])));
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root[F("sensor")] = F("weather");
+
   if (get_wind_direction() < 0) {
     // likely that weather meters are not conneced
-    topicBuffer[0] = '\0';
-    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[WEATHER_METERS_STATUS_IDX])));
     payloadBuffer[0] = '\0';
-    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_ERROR_IDX])));
+    strcpy_P(payloadBuffer, (char *)pgm_read_word(&(PROGMEM_STRINGS[PROGMEM_STRING_ERROR_IDX])));
     #if ENABLE_MQTT
     if (mqttClient.connected()) {
       mqttClient.publish(topicBuffer, payloadBuffer);
@@ -580,9 +516,9 @@ byte weatherboard_meters_connected()
     return 0;
   }
   topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_STATUS_TOPICS[WEATHER_METERS_STATUS_IDX])));
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[WEATHER_METERS_STATUS_IDX])));
   payloadBuffer[0] = '\0';
-  strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_OK_IDX])));
+  strcpy_P(payloadBuffer, (char *)pgm_read_word(&(PROGMEM_STRINGS[PROGMEM_STRING_OK_IDX])));
   #if ENABLE_MQTT
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
@@ -632,7 +568,7 @@ void publish_windspeed_measurement()
   windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
 #endif
   topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[WIND_SPEED_TOPIC_IDX])));
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[WIND_SPEED_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
   dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
   #if ENABLE_MQTT
@@ -645,7 +581,7 @@ void publish_windspeed_measurement()
   // publish maximum wind speed since last report
   windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
   topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[WIND_SPEED_MAX_TOPIC_IDX])));
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[WIND_SPEED_MAX_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
   dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
   #if ENABLE_MQTT
@@ -668,7 +604,7 @@ byte publish_wind_direction_measurement()
 #endif
   if (WM_wdirection >= 0) {
     topicBuffer[0] = '\0';
-    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[WIND_DIRECTION_TOPIC_IDX])));
+    strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[WIND_DIRECTION_TOPIC_IDX])));
     payloadBuffer[0] = '\0';
     dtostrf(WM_wdirection, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
     #if ENABLE_MQTT
@@ -690,7 +626,7 @@ void publish_rainfall_measurement()
   float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
 
   topicBuffer[0] = '\0';
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_MEASUREMENT_TOPICS[RAINFALL_TOPIC_IDX])));
+  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[RAINFALL_TOPIC_IDX])));
   payloadBuffer[0] = '\0';
   dtostrf(rainfallMeasurement, 1, FLOAT_DECIMAL_PLACES, payloadBuffer);
   #if ENABLE_MQTT

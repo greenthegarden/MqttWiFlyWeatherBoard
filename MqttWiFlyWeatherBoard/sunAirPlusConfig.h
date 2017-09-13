@@ -40,6 +40,13 @@ typedef enum {
   OUTPUT_CURRENT_TOPIC_IDX   = 5,
 } sunairplus_topics;
 
+#if ENABLE_JSON
+void publish_sunairplus_measurement()
+  JsonObject& root = payloadBuffer.createObject();
+  root[F("sensor")] = F("gps");
+  root[F("time")] = 1351824120;
+}
+#else
 void publish_sunairplus_measurement()
 {
   float measurement = 0.0;
@@ -54,6 +61,8 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
   measurement = ina3221.getCurrent_mA(LIPO_BATTERY_CHANNEL);
   topicBuffer[0] = '\0';
@@ -64,6 +73,8 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
 
   // Solar cell measurements
@@ -76,6 +87,8 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
   measurement = ina3221.getCurrent_mA(SOLAR_CELL_CHANNEL);
   topicBuffer[0] = '\0';
@@ -86,6 +99,8 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
 
   // SunAirPlus output measurements
@@ -98,6 +113,8 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
   measurement = ina3221.getCurrent_mA(OUTPUT_CHANNEL);
   topicBuffer[0] = '\0';
@@ -108,8 +125,11 @@ void publish_sunairplus_measurement()
   if (mqttClient.connected()) {
     mqttClient.publish(topicBuffer, payloadBuffer);
   }
+  #else
+  printTopicPayloadPair(topicBuffer, payloadBuffer);
   #endif
 }
+#endif
 
 
 #endif  /* MQTTWIFLYWEATHERBOARD_SUNAIRPLUSCONFIG_H_ */

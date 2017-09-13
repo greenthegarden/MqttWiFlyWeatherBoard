@@ -3,9 +3,16 @@
 
 //#include "debug.h"
 
-const byte BUFFER_SIZE = 42;
-char topicBuffer[BUFFER_SIZE];
-char payloadBuffer[BUFFER_SIZE];
+// define buffers
+#if ENABLE_JSON
+#include <ArduinoJson.h>
+const byte JSON_BUFFER_SIZE = 42;
+//StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+#endif
+const byte TOPIC_BUFFER_SIZE = 42;
+char topicBuffer[TOPIC_BUFFER_SIZE];
+const byte PAYLOAD_BUFFER_SIZE = 42;
+char payloadBuffer[PAYLOAD_BUFFER_SIZE];
 
 const byte FLOAT_DECIMAL_PLACES = 1;
 
@@ -41,8 +48,6 @@ typedef enum {
 #else
   #error "Unexpected value of COMMUNICATION_METHOD"
 #endif
-
-#define ENABLE_MQTT 0
 
 void printTopicPayloadPair(const char* topic, const char* payload) {
   Serial.print(topic);
