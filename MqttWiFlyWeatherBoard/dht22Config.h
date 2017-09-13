@@ -18,49 +18,77 @@ byte dht22_measurement() {
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(
                              &(DHT22_STATUS_MESSAGES[DHT22_STATUS_OK_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+    #if ENABLE_MQTT
+    if (mqttClient.connected()) {
+      mqttClient.publish(progBuffer, messBuffer);
+    }
+    #endif
     break;
   case DHTLIB_ERROR_CHECKSUM:
     DEBUG_LOG(1, "Checksum error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_CHECKSUM_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+    #if ENABLE_MQTT
+    if (mqttClient.connected()) {
+      mqttClient.publish(progBuffer, messBuffer);
+    }
+    #endif
     break;
   case DHTLIB_ERROR_TIMEOUT:
     DEBUG_LOG(1, "Time out error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_TIMEOUT_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+                             #if ENABLE_MQTT
+                             if (mqttClient.connected()) {
+                               mqttClient.publish(progBuffer, messBuffer);
+                             }
+                             #endif
     break;
   case DHTLIB_ERROR_CONNECT:
     DEBUG_LOG(1, "Connect error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_CONNECT_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+                             #if ENABLE_MQTT
+                             if (mqttClient.connected()) {
+                               mqttClient.publish(progBuffer, messBuffer);
+                             }
+                             #endif
     break;
   case DHTLIB_ERROR_ACK_L:
     DEBUG_LOG(1, "Ack Low error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_ACK_LOW_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+                             #if ENABLE_MQTT
+                             if (mqttClient.connected()) {
+                               mqttClient.publish(progBuffer, messBuffer);
+                             }
+                             #endif
     break;
   case DHTLIB_ERROR_ACK_H:
     DEBUG_LOG(1, "Ack High error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_ACK_HIGH_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+                             #if ENABLE_MQTT
+                             if (mqttClient.connected()) {
+                               mqttClient.publish(progBuffer, messBuffer);
+                             }
+                             #endif
     break;
   default:
     DEBUG_LOG(1, "Unknown error");
     messBuffer[0] = '\0';
     strcpy_P(messBuffer, (char *)pgm_read_word(&(
                              DHT22_STATUS_MESSAGES[DHT22_UNKNOWN_ERROR_IDX])));
-    mqttClient.publish(progBuffer, messBuffer);
+                             #if ENABLE_MQTT
+                             if (mqttClient.connected()) {
+                               mqttClient.publish(progBuffer, messBuffer);
+                             }
+                             #endif
     break;
   }
   return chk;
@@ -74,7 +102,11 @@ void publish_dht22_temperature_measurement() {
   dtostrf(dht.temperature, 1, FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[10])));
-  mqttClient.publish(progBuffer, buf);
+  #if ENABLE_MQTT
+  if (mqttClient.connected()) {
+    mqttClient.publish(progBuffer, buf);
+  }
+  #endif
 }
 
 void publish_dht22_humidity_measurement() {
@@ -85,7 +117,11 @@ void publish_dht22_humidity_measurement() {
   dtostrf(dht.humidity, 1, FLOAT_DECIMAL_PLACES, buf);
   progBuffer[0] = '\0';
   strcpy_P(progBuffer, (char *)pgm_read_word(&(MEASUREMENT_TOPICS[11])));
-  mqttClient.publish(progBuffer, buf);
+  #if ENABLE_MQTT
+  if (mqttClient.connected()) {
+    mqttClient.publish(progBuffer, buf);
+  }
+  #endif
 }
 
 void publish_dht22_measurements() {

@@ -60,89 +60,90 @@
     Fixed reliability of sleep
 */
 
-#include "debug.h"
+//#include "debug.h"
 
 #include "config.h"
 
-void publish_measurements(void) {
-  publish_sht15_measurements();
-  if (pressureSensorStatus) {
-    publish_bmp085_measurements();
-  }
-  publish_temt6000_measurement();
-#if ENABLE_WEATHER_METERS
-  publish_weather_meter_measurement();
-#endif
-#if ENABLE_DHT22
-  publish_dht22_measurements();
-#endif
-#if ENABLE_POWER_MONITOR
-  publish_sunairplus_measurement();
-#endif
-}
-
-<<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
-byte publish_report()
-{
-  #if 0
-=======
-byte publish_report() {
->>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
-#if USE_STATUS_LED
-  digitalWrite(STATUS_LED, HIGH);
-#endif
-
-  if (!wiflyConnectedToNetwork) {
-    wifly_connect_to_network();
-  }
-
-  if (wiflyConnectedToNetwork) {
-    if (mqttClient.connect(mqttClientId)) {
-
-#if USE_STATUS_LED
-      digitalWrite(STATUS_LED, LOW);
-#endif
-
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WIFLY_STATUS_IDX])));
-      payloadBuffer[0] = '\0';
-      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_CONNECTED_IDX])));
-      mqttClient.publish(topicBuffer, payloadBuffer);
-
-      // publish report start topic
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
-      payloadBuffer[0] = '\0';
-      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_START_IDX])));
-      mqttClient.publish(topicBuffer, payloadBuffer);
-
-      publish_measurements();
-
-      // publish report end topic
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
-      payloadBuffer[0] = '\0';
-      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_END_IDX])));
-      mqttClient.publish(topicBuffer, payloadBuffer);
-
-<<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
-      mqttClient.disconnect();  // should stop tcp connection
-      while (mqttClient.state() != MQTT_DISCONNECTED) { }
-      
-=======
-      mqttClient.disconnect(); // should stop tcp connection
-
->>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
-      return 1;
-    }
-  }
-<<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
-  #else
-  DEBUG_LOG(1,"REPORT");
-  #endif
-=======
-  return 0;
->>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
+// void publish_measurements(void) {
+//   publish_sht15_measurements();
+//   if (pressureSensorStatus) {
+//     publish_bmp085_measurements();
+//   }
+//   publish_temt6000_measurement();
+// #if ENABLE_WEATHER_METERS
+//   publish_weather_meter_measurement();
+// #endif
+// #if ENABLE_DHT22
+//   publish_dht22_measurements();
+// #endif
+// #if ENABLE_POWER_MONITOR
+//   publish_sunairplus_measurement();
+// #endif
+// }
+//
+// <<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
+// byte publish_report()
+// {
+//   #if 0
+// =======
+ byte publish_report() {
+   Serial.println(millis());
+// >>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
+// #if USE_STATUS_LED
+//   digitalWrite(STATUS_LED, HIGH);
+// #endif
+//
+//   if (!wiflyConnectedToNetwork) {
+//     wifly_connect_to_network();
+//   }
+//
+//   if (wiflyConnectedToNetwork) {
+//     if (mqttClient.connect(mqttClientId)) {
+//
+// #if USE_STATUS_LED
+//       digitalWrite(STATUS_LED, LOW);
+// #endif
+//
+//       topicBuffer[0] = '\0';
+//       strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WIFLY_STATUS_IDX])));
+//       payloadBuffer[0] = '\0';
+//       strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_CONNECTED_IDX])));
+//       mqttClient.publish(topicBuffer, payloadBuffer);
+//
+//       // publish report start topic
+//       topicBuffer[0] = '\0';
+//       strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
+//       payloadBuffer[0] = '\0';
+//       strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_START_IDX])));
+//       mqttClient.publish(topicBuffer, payloadBuffer);
+//
+//       publish_measurements();
+//
+//       // publish report end topic
+//       topicBuffer[0] = '\0';
+//       strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[REPORT_STATUS_IDX])));
+//       payloadBuffer[0] = '\0';
+//       strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_END_IDX])));
+//       mqttClient.publish(topicBuffer, payloadBuffer);
+//
+// <<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
+//       mqttClient.disconnect();  // should stop tcp connection
+//       while (mqttClient.state() != MQTT_DISCONNECTED) { }
+//
+// =======
+//       mqttClient.disconnect(); // should stop tcp connection
+//
+// >>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
+//       return 1;
+//     }
+//   }
+// <<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
+//   #else
+//   DEBUG_LOG(1,"REPORT");
+//   #endif
+// =======
+   return 0;
+// >>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
 }
 
 void reset_cummulative_measurements() {
@@ -156,49 +157,9 @@ void reset_cummulative_measurements() {
   Called by the Arduino framework once, before the main loop begins
   --------------------------------------------------------------------------------------*/
 void setup() {
-#if DEBUG_LEVEL > 0
-  Serial.begin(BAUD_RATE); // Start hardware serial interface for debugging
-#endif
+  Serial.begin(BAUD_RATE);  // Start hardware serial interface for debugging
 
-#if USE_STATUS_LED
-  // Configure status LED
-  pinMode(STATUS_LED, OUTPUT);
-  digitalWrite(STATUS_LED, LOW);
-#endif
-
-<<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
-  rfpins_init();                // configure rf pins on weatherboard
-=======
-  rfpins_init(); // configure rf pins on weatherboard as inputs
->>>>>>> 2f180aa97670e8584f812c7bfd42e721782b90f7:MqttWiFlyWeatherBoard/MqttWiFlyWeatherBoard.ino
-
-  delay(2000); // use a delay to get things settled before configuring WiFly
-
-  // Configure WiFly
-  DEBUG_LOG(1, "WiFly");
-
-  wifly_init();
-
-  wifly_connect_to_network();
-
-#if USE_STATUS_LED
-//  digitalWrite(STATUS_LED, HIGH);
-#endif
-
-  if (wiflyConnectedToNetwork) {
-    if (mqttClient.connect(mqttClientId)) {
-#if USE_STATUS_LED
- //     digitalWrite(STATUS_LED, LOW);
-#endif
-      topicBuffer[0] = '\0';
-      strcpy_P(topicBuffer, (char *)pgm_read_word(&(STATUS_TOPICS[WIFLY_STATUS_IDX])));
-      payloadBuffer[0] = '\0';
-      strcpy_P(payloadBuffer, (char *)pgm_read_word(&(MQTT_PAYLOADS[MQTT_PAYLOAD_CONNECTED_IDX])));
-      mqttClient.publish(topicBuffer, payloadBuffer);
-    }
-  }
-
-//  weatherboard_sensors_init();
+//  rfpins_init();                // configure rf pins on weatherboard
 
 #if ENABLE_WEATHER_METERS
   weatherboard_meters_init();
@@ -211,15 +172,8 @@ void setup() {
   ina3221.begin();
 #endif
 
-  if (wiflyConnectedToNetwork) {
-    if (mqttClient.connected())
-      mqttClient.disconnect();
-      while (mqttClient.state() != MQTT_DISCONNECTED) { }
-  }
+  Serial.println("Welcome to the weather");
 
-#if USE_WIFLY_SLEEP
-  wifly_sleep();
-#endif
 }
 /*--------------------------------------------------------------------------------------
   end setup()
@@ -231,11 +185,7 @@ void setup() {
   --------------------------------------------------------------------------------------*/
 void loop() {
   unsigned long currentMillis = millis();
-  
-    if (digitalRead(RF_RTS) == HIGH) {
-      digitalWrite(STATUS_LED, HIGH);
-    }
- 
+
 #if 0
 //#if USE_WIFLY_SLEEP
   // use WiFly timer to publish reports
