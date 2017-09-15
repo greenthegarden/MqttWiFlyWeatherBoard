@@ -64,22 +64,22 @@
 
 #include "config.h"
 
-// void publish_measurements(void) {
-//   publish_sht15_measurements();
-//   if (pressureSensorStatus) {
-//     publish_bmp085_measurements();
-//   }
-//   publish_temt6000_measurement();
-// #if ENABLE_WEATHER_METERS
-//   publish_weather_meter_measurement();
-// #endif
-// #if ENABLE_DHT22
-//   publish_dht22_measurements();
-// #endif
-// #if ENABLE_POWER_MONITOR
-//   publish_sunairplus_measurement();
-// #endif
-// }
+void publish_measurements(void) {
+  publish_sht15_measurements();
+  if (pressureSensorStatus) {
+    publish_bmp085_measurements();
+  }
+  publish_temt6000_measurement();
+#if ENABLE_WEATHER_METERS
+  publish_weather_meter_measurement();
+#endif
+#if ENABLE_DHT22
+  publish_dht22_measurements();
+#endif
+#if ENABLE_POWER_MONITOR
+  publish_sunairplus_measurement();
+#endif
+}
 //
 // <<<<<<< HEAD:MqttWiFlyWeatherBoard.ino
 // byte publish_report()
@@ -223,7 +223,7 @@ void loop() {
   if (currentMillis - previousMeasurementMillis >= MEASUREMENT_INTERVAL) {
     previousMeasurementMillis = currentMillis;
 //    publish_report();
-//    publish_measurements();
+    publish_measurements();
     reset_cummulative_measurements();
   }
 #endif /* USE_WIFLY_SLEEP */
