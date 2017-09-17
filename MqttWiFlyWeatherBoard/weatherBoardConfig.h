@@ -573,14 +573,16 @@ void weatherboard_meters_init()
   }
 }
 
-void publish_wind_measurement()
+void publish_wind_measurement(JsonObject& root)
 {
-  char topicBuffer[TOPIC_BUFFER_SIZE];
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_WIND_TOPIC_IDX])));
+  // char topicBuffer[TOPIC_BUFFER_SIZE];
+  // strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_WIND_TOPIC_IDX])));
 
-  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("wind");
+  // StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  // JsonObject& root = jsonBuffer.createObject();
+  // root[F("sensor")] = F("wind");
+
+  JsonObject& sensor = root.createNestedObject("wind");
 
   float windSpeedMeasurement = -1.0; // this value should never be published
 // publish instantaneous wind speed
@@ -590,12 +592,12 @@ void publish_wind_measurement()
   windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
 #endif
 
-  root[F("speed")] = windSpeedMeasurement;
+  sensor[F("speed")] = windSpeedMeasurement;
 
   // publish maximum wind speed since last report
   windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
 
-  root[F("maxspeed")] = windSpeedMeasurement;
+  sensor[F("maxspeed")] = windSpeedMeasurement;
 
   float WM_wdirection = -1.0;
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
@@ -605,21 +607,21 @@ void publish_wind_measurement()
   WM_wdirection = get_wind_direction(); // should return a -1 if disconnected
 #endif
   if (WM_wdirection >= 0) {
-    root[F("dir")] = WM_wdirection;
+    sensor[F("dir")] = WM_wdirection;
   } else {
-    root[F("dir")] = F("err");
+    sensor[F("dir")] = F("err");
   }
 
-  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
-  root.printTo(payloadBuffer);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  Serial.println(payloadBuffer);
-//  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+//   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+//   root.printTo(payloadBuffer);
+//   #if ENABLE_MQTT
+//   if (mqttClient.connected()) {
+//     mqttClient.publish(topicBuffer, payloadBuffer);
+//   }
+//   #else
+//   Serial.println(payloadBuffer);
+// //  printTopicPayloadPair(topicBuffer, payloadBuffer);
+//   #endif
 }
 
 // byte publish_wind_direction_measurement()
@@ -633,41 +635,43 @@ void publish_wind_measurement()
 //   return 0;
 // }
 
-void publish_rainfall_measurement()
+void publish_rainfall_measurement(JsonObject& root)
 {
-  char topicBuffer[TOPIC_BUFFER_SIZE];
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_RAINFALL_TOPIC_IDX])));
+  // char topicBuffer[TOPIC_BUFFER_SIZE];
+  // strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_RAINFALL_TOPIC_IDX])));
+  //
+  // StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  // JsonObject& root = jsonBuffer.createObject();
+  // root[F("sensor")] = F("rain");
 
-  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("rain");
+  JsonObject& sensor = root.createNestedObject("rain");
 
   // rainfall unit conversion
   float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
 
-  root[F("rainfall")] = rainfallMeasurement;
+  sensor[F("rainfall")] = rainfallMeasurement;
 
-  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
-  root.printTo(payloadBuffer);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  Serial.println(payloadBuffer);
-//  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+//   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+//   root.printTo(payloadBuffer);
+//   #if ENABLE_MQTT
+//   if (mqttClient.connected()) {
+//     mqttClient.publish(topicBuffer, payloadBuffer);
+//   }
+//   #else
+//   Serial.println(payloadBuffer);
+// //  printTopicPayloadPair(topicBuffer, payloadBuffer);
+//   #endif
   // reset value of rain to zero
   rain = 0;
 }
 
-void publish_weather_meter_measurement()
+void publish_weather_meter_measurement(JsonObject& root)
 {
   // take wind-direction measurement first
   // if returns -1 then treat as sensors not connected
   if (weatherboard_meters_connected()) {
-    publish_wind_measurement();
-    publish_rainfall_measurement();
+    publish_wind_measurement(root);
+    publish_rainfall_measurement(root);
   }
 }
 

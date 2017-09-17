@@ -84,7 +84,7 @@ void printTopicPayloadPair(const char* topic, const char* payload) {
 #endif
 
 #if ENABLE_POWER_MONITOR
-//#include "sunAirPlusConfig.h"
+#include "sunAirPlusConfig.h"
 #endif
 
 #if ENABLE_DHT22

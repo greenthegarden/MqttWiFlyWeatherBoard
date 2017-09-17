@@ -75,13 +75,13 @@ void publish_measurements(void) {
   }
   publish_temt6000_measurement(root);
 #if ENABLE_WEATHER_METERS
-  publish_weather_meter_measurement();
+  publish_weather_meter_measurement(root);
 #endif
 #if ENABLE_DHT22
-  publish_dht22_measurements();
+  publish_dht22_measurements(root);
 #endif
 #if ENABLE_POWER_MONITOR
-  publish_sunairplus_measurement();
+  publish_sunairplus_measurement(root);
 #endif
 
   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
