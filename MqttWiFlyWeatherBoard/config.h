@@ -88,7 +88,7 @@ void printTopicPayloadPair(const char* topic, const char* payload) {
 #endif
 
 #if ENABLE_DHT22
-//#include "dht22Config.h"
+#include "dht22Config.h"
 #endif
 
 #include "progmemStrings.h"

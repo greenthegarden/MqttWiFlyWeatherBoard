@@ -78,7 +78,7 @@ void publish_measurements(void) {
   publish_weather_meter_measurement(root);
 #endif
 #if ENABLE_DHT22
-  publish_dht22_measurements(root);
+  publish_dht22_measurement(root);
 #endif
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement(root);
