@@ -65,11 +65,15 @@
 #include "config.h"
 
 void publish_measurements(void) {
-  publish_sht15_measurements();
+
+  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+
+  publish_sht15_measurements(root);
   if (pressureSensorStatus) {
-    publish_bmp085_measurements();
+    publish_bmp085_measurements(root);
   }
-  publish_temt6000_measurement();
+  publish_temt6000_measurement(root);
 #if ENABLE_WEATHER_METERS
   publish_weather_meter_measurement();
 #endif
@@ -78,6 +82,17 @@ void publish_measurements(void) {
 #endif
 #if ENABLE_POWER_MONITOR
   publish_sunairplus_measurement();
+#endif
+
+  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+  root.printTo(payloadBuffer);
+#if ENABLE_MQTT
+  if (mqttClient.connected()) {
+    mqttClient.publish(topicBuffer, payloadBuffer);
+  }
+#else
+  Serial.println(payloadBuffer);
+//  printTopicPayloadPair(topicBuffer, payloadBuffer);
 #endif
 }
 //

@@ -137,9 +137,9 @@ void weatherboard_sensors_init()
   // init BMP085 pressure sensor and publish result
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("bmp085");
 
   char charBuffer[12];
   if (pressureSensor.begin()) { // initialize the BMP085 pressure sensor
@@ -164,50 +164,53 @@ void weatherboard_sensors_init()
   #endif
 }
 
-void publish_sht15_measurements()
+void publish_sht15_measurements(JsonObject& root)
 {
   TWCR &= ~(_BV(TWEN)); // turn off I2C enable bit to allow access to
                         // the SHT15 humidity sensor
 
-  char topicBuffer[TOPIC_BUFFER_SIZE];
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_SHT15_TOPIC_IDX])));
+  // char topicBuffer[TOPIC_BUFFER_SIZE];
+  // strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_SHT15_TOPIC_IDX])));
 
-  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("sht15");
+//  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+//  JsonObject& root = jsonBuffer.createObject();
+
+  JsonObject& sensor = root.createNestedObject("sht15");
 
   float measurement = 0.0;
 
   // humidity reading
   measurement = humiditySensor.readTemperatureC(); // temperature returned in degrees Celcius
-  root[F("temp")] = measurement;
+  sensor[F("temp")] = measurement;
 
   measurement = humiditySensor.readHumidity();
-  root[F("hum")] = measurement;
+  sensor[F("hum")] = measurement;
 
-  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
-  root.printTo(payloadBuffer);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  Serial.println(payloadBuffer);
-//  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+//   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+//   root.printTo(payloadBuffer);
+//   #if ENABLE_MQTT
+//   if (mqttClient.connected()) {
+//     mqttClient.publish(topicBuffer, payloadBuffer);
+//   }
+//   #else
+//   Serial.println(payloadBuffer);
+// //  printTopicPayloadPair(topicBuffer, payloadBuffer);
+//   #endif
 }
 
-void publish_bmp085_measurements()
+void publish_bmp085_measurements(JsonObject& root)
 {
   TWCR |= _BV(TWEN); // turn on I2C enable bit to allow access to
                      // the BMP085 pressure sensor
 
-  char topicBuffer[TOPIC_BUFFER_SIZE];
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
+  // char topicBuffer[TOPIC_BUFFER_SIZE];
+  // strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
 
-  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("bmp085");
+  // StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  // JsonObject& root = jsonBuffer.createObject();
+//  root[F("sensor")] = F("bmp085");
+
+  JsonObject& sensor = root.createNestedObject("bmp085");
 
   byte status;
   double bmp085Temp = 0.0;
@@ -228,7 +231,7 @@ void publish_bmp085_measurements()
 
     if (status != 0) {
       // publish BMP085 temperature measurement
-      root[F("temp")] = bmp085Temp;
+      sensor[F("temp")] = bmp085Temp;
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res,
@@ -254,53 +257,55 @@ void publish_bmp085_measurements()
           // publish BMP085 pressure measurement
           // pressure in millibars (or hectopascal/hPa)
           // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
-          root[F("pres")] = bmp085Pressure;
+          sensor[F("pres")] = bmp085Pressure;
         } else {
           // publish pressure get error
           char charBuffer[12];
           strcpy_P(charBuffer,
                    (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_GET_IDX])));
-          root[F("err")] = charBuffer;
+          sensor[F("err")] = charBuffer;
         }
       } else {
         // publish pressure start error
         char charBuffer[12];
         strcpy_P(charBuffer,
                  (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_START_IDX])));
-        root[F("err")] = charBuffer;
+        sensor[F("err")] = charBuffer;
        }
     } else {
       // publish temperature get error
       char charBuffer[12];
       strcpy_P(charBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_GET_IDX])));
-      root[F("err")] = charBuffer;
+      sensor[F("err")] = charBuffer;
     }
   } else {
     // publish temperature start error
     char charBuffer[12];
     strcpy_P(charBuffer, (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_TEMP_START_IDX])));
-    root[F("err")] = charBuffer;
+    sensor[F("err")] = charBuffer;
   }
-  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
-  root.printTo(payloadBuffer);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  Serial.println(payloadBuffer);
-//  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+//   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+//   root.printTo(payloadBuffer);
+//   #if ENABLE_MQTT
+//   if (mqttClient.connected()) {
+//     mqttClient.publish(topicBuffer, payloadBuffer);
+//   }
+//   #else
+//   Serial.println(payloadBuffer);
+// //  printTopicPayloadPair(topicBuffer, payloadBuffer);
+//   #endif
 }
 
-void publish_temt6000_measurement()
+void publish_temt6000_measurement(JsonObject& root)
 {
-  char topicBuffer[TOPIC_BUFFER_SIZE];
-  strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_TEMT6000_TOPIC_IDX])));
+  // char topicBuffer[TOPIC_BUFFER_SIZE];
+  // strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_TEMT6000_TOPIC_IDX])));
 
-  StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root[F("sensor")] = F("temt6000");
+  // StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+  // JsonObject& root = jsonBuffer.createObject();
+  // root[F("sensor")] = F("temt6000");
+
+  JsonObject& sensor = root.createNestedObject("temt6000");
 
 // get light level
 #if ENABLE_EXTERNAL_LIGHT
@@ -311,23 +316,23 @@ void publish_temt6000_measurement()
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
 #endif
 
-  root[F("raw")] = TEMT6000_light_raw;
+  sensor[F("raw")] = TEMT6000_light_raw;
 
   // convert TEMT6000_light_raw voltage value to percentage
   // map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
-  root[F("level")] = TEMT6000_light;
+  sensor[F("level")] = TEMT6000_light;
 
-  char payloadBuffer[PAYLOAD_BUFFER_SIZE];
-  root.printTo(payloadBuffer);
-  #if ENABLE_MQTT
-  if (mqttClient.connected()) {
-    mqttClient.publish(topicBuffer, payloadBuffer);
-  }
-  #else
-  Serial.println(payloadBuffer);
-//  printTopicPayloadPair(topicBuffer, payloadBuffer);
-  #endif
+//   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
+//   root.printTo(payloadBuffer);
+//   #if ENABLE_MQTT
+//   if (mqttClient.connected()) {
+//     mqttClient.publish(topicBuffer, payloadBuffer);
+//   }
+//   #else
+//   Serial.println(payloadBuffer);
+// //  printTopicPayloadPair(topicBuffer, payloadBuffer);
+//   #endif
 }
 
 #if ENABLE_WEATHER_METERS
