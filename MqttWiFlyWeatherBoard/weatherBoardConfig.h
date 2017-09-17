@@ -203,11 +203,12 @@ void publish_bmp085_measurements()
 
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_BMP085_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("bmp085");
 
-  char status;
+  byte status;
   double bmp085Temp = 0.0;
   double bmp085Pressure = 0.0;
 
@@ -255,8 +256,9 @@ void publish_bmp085_measurements()
           // pressure in millibars (or hectopascal/hPa)
           // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
           char charBuffer[12];
-          dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-          root[F("pres")] = charBuffer;
+          // dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, charBuffer);
+          // root[F("pres")] = charBuffer;
+          root[F("pres")] = bmp085Pressure;          
         } else {
           // publish pressure get error
           char charBuffer[12];
@@ -270,7 +272,7 @@ void publish_bmp085_measurements()
         strcpy_P(charBuffer,
                  (char *)pgm_read_word(&(BMP085_STATUS_MESSAGES[BMP085_ERROR_PRESSURE_START_IDX])));
         root[F("err")] = charBuffer;
-      }
+       }
     } else {
       // publish temperature get error
       char charBuffer[12];
