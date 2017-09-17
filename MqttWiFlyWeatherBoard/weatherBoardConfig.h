@@ -171,6 +171,7 @@ void publish_sht15_measurements()
 
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_SHT15_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("sht15");
@@ -227,9 +228,7 @@ void publish_bmp085_measurements()
 
     if (status != 0) {
       // publish BMP085 temperature measurement
-      char charBuffer[12];
-      dtostrf(bmp085Temp, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-      root[F("temp")] = charBuffer;
+      root[F("temp")] = bmp085Temp;
 
       // tell the sensor to start a pressure measurement
       // the parameter is the oversampling setting, from 0 to 3 (highest res,
@@ -255,10 +254,7 @@ void publish_bmp085_measurements()
           // publish BMP085 pressure measurement
           // pressure in millibars (or hectopascal/hPa)
           // 1 millibar is equivalent to 0.02953 inches of mercury (Hg)
-          char charBuffer[12];
-          // dtostrf(bmp085Pressure, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-          // root[F("pres")] = charBuffer;
-          root[F("pres")] = bmp085Pressure;          
+          root[F("pres")] = bmp085Pressure;
         } else {
           // publish pressure get error
           char charBuffer[12];
@@ -301,6 +297,7 @@ void publish_temt6000_measurement()
 {
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_TEMT6000_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("temt6000");
@@ -314,16 +311,12 @@ void publish_temt6000_measurement()
   int TEMT6000_light_raw = 1023 - analogRead(LIGHT);
 #endif
 
-  char charBuffer[12];
-  itoa(TEMT6000_light_raw, charBuffer, 10);
-  root[F("raw")] = charBuffer;
+  root[F("raw")] = TEMT6000_light_raw;
 
   // convert TEMT6000_light_raw voltage value to percentage
   // map(value, fromLow, fromHigh, toLow, toHigh)
   int TEMT6000_light = map(TEMT6000_light_raw, 0, 1023, 0, 100);
-  charBuffer[0] = '\0';
-  itoa(TEMT6000_light, charBuffer, 10);
-  root[F("level")] = charBuffer;
+  root[F("level")] = TEMT6000_light;
 
   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
   root.printTo(payloadBuffer);
@@ -506,6 +499,7 @@ byte weatherboard_meters_connected()
 {
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_WIND_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("weather");
@@ -578,6 +572,7 @@ void publish_wind_measurement()
 {
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_WIND_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("wind");
@@ -590,20 +585,12 @@ void publish_wind_measurement()
   windSpeedMeasurement = float(windRpm) / WIND_RPM_TO_KNOTS;
 #endif
 
-  {
-    char charBuffer[12];
-    dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-    root[F("speed")] = charBuffer;
-  }
+  root[F("speed")] = windSpeedMeasurement;
 
   // publish maximum wind speed since last report
   windSpeedMeasurement = float(windRpmMax) / WIND_RPM_TO_KNOTS;
 
-  {
-    char charBuffer[12];
-    dtostrf(windSpeedMeasurement, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-    root[F("maxspeed")] = charBuffer;
-  }
+  root[F("maxspeed")] = windSpeedMeasurement;
 
   float WM_wdirection = -1.0;
 #if ENABLE_WIND_MEASUREMENT_AVERAGING
@@ -613,9 +600,7 @@ void publish_wind_measurement()
   WM_wdirection = get_wind_direction(); // should return a -1 if disconnected
 #endif
   if (WM_wdirection >= 0) {
-    char charBuffer[12];
-    dtostrf(WM_wdirection, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-    root[F("dir")] = charBuffer;
+    root[F("dir")] = WM_wdirection;
   } else {
     root[F("dir")] = F("err");
   }
@@ -647,6 +632,7 @@ void publish_rainfall_measurement()
 {
   char topicBuffer[TOPIC_BUFFER_SIZE];
   strcpy_P(topicBuffer, (char *)pgm_read_word(&(SENSOR_TOPICS[SENSOR_RAINFALL_TOPIC_IDX])));
+
   StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root[F("sensor")] = F("rain");
@@ -654,9 +640,7 @@ void publish_rainfall_measurement()
   // rainfall unit conversion
   float rainfallMeasurement = rain * RAIN_BUCKETS_TO_MM;
 
-  char charBuffer[12];
-  dtostrf(rainfallMeasurement, 1, FLOAT_DECIMAL_PLACES, charBuffer);
-  root[F("fall")] = charBuffer;
+  root[F("rainfall")] = rainfallMeasurement;
 
   char payloadBuffer[PAYLOAD_BUFFER_SIZE];
   root.printTo(payloadBuffer);
